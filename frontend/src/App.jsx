@@ -3,9 +3,18 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Login from "./pages/auth/Login";
 import CustomerDashboard from "./pages/customer/Dashboard";
-import Products from "./pages/customer/Products"; // ✅ TAMBAHKAN IMPORT INI
+import Products from "./pages/customer/Products";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
+
+// IMPORT ADMIN LAYOUT & PAGES (yang akan kita buat)
+import AdminLayout from "./layouts/AdminLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminProducts from "./pages/admin/products/Products";
+
+// IMPORT PROTECTED ROUTE (yang baru saja kita buat)
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import "./pages/customer/Dashboard.css";
 import "./components/layout/Header.css";
 import "./components/layout/Footer.css";
@@ -93,94 +102,109 @@ function App() {
           {/* PUBLIC ROUTES */}
           <Route path="/login" element={<Login />} />
 
-          {/* CUSTOMER ROUTES */}
+          {/* ========== CUSTOMER ROUTES (Navbar di ATAS) ========== */}
           <Route
             path="/dashboard"
             element={
-              userRole === "customer" ? (
+              <ProtectedRoute allowedRoles={["customer"]}>
                 <Layout>
                   <CustomerDashboard />
                 </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              </ProtectedRoute>
             }
           />
 
-          {/* ✅ TAMBAHKAN ROUTE UNTUK HALAMAN CUSTOMER */}
           <Route
             path="/customer/products"
             element={
-              userRole === "customer" ? (
+              <ProtectedRoute allowedRoles={["customer"]}>
                 <Layout>
-                  <Products /> {/* ✅ GANTI ComingSoonPage dengan Products */}
+                  <Products />
                 </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/customer/categories"
             element={
-              userRole === "customer" ? (
+              <ProtectedRoute allowedRoles={["customer"]}>
                 <Layout>
                   <ComingSoonPage title="Kategori" />
                 </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/customer/categories/:id"
             element={
-              userRole === "customer" ? (
+              <ProtectedRoute allowedRoles={["customer"]}>
                 <Layout>
                   <ComingSoonPage title="Detail Kategori" />
                 </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/customer/products/:id"
             element={
-              userRole === "customer" ? (
+              <ProtectedRoute allowedRoles={["customer"]}>
                 <Layout>
                   <ComingSoonPage title="Detail Produk" />
                 </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              </ProtectedRoute>
             }
           />
 
           <Route
             path="/customer/promo"
             element={
-              userRole === "customer" ? (
+              <ProtectedRoute allowedRoles={["customer"]}>
                 <Layout>
                   <ComingSoonPage title="Promo" />
                 </Layout>
-              ) : (
-                <Navigate to="/login" />
-              )
+              </ProtectedRoute>
             }
           />
 
-          {/* DEFAULT ROUTE */}
+          {/* ========== ADMIN ROUTES (Sidebar di SAMPING) ========== */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            {/* Halaman-halaman admin akan dirender di dalam AdminLayout */}
+            <Route index element={<AdminDashboard />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route
+              path="orders"
+              element={<ComingSoonPage title="Kelola Pesanan" />}
+            />
+            <Route
+              path="customers"
+              element={<ComingSoonPage title="Kelola Pelanggan" />}
+            />
+            <Route
+              path="settings"
+              element={<ComingSoonPage title="Pengaturan" />}
+            />
+          </Route>
+
+          {/* DEFAULT ROUTE - Redirect berdasarkan role */}
           <Route
             path="/"
             element={
-              userRole === "customer" ? (
-                <Navigate to="/dashboard" />
+              userRole === "admin" ? (
+                <Navigate to="/admin" replace />
+              ) : userRole === "customer" ? (
+                <Navigate to="/dashboard" replace />
               ) : (
-                <Navigate to="/login" />
+                <Navigate to="/login" replace />
               )
             }
           />
@@ -203,7 +227,13 @@ function App() {
                 <h1>404 - Halaman Tidak Ditemukan</h1>
                 <p>Halaman yang Anda cari tidak ada.</p>
                 <button
-                  onClick={() => (window.location.href = "/dashboard")}
+                  onClick={() => {
+                    if (userRole === "admin") {
+                      window.location.href = "/admin";
+                    } else {
+                      window.location.href = "/dashboard";
+                    }
+                  }}
                   style={{
                     padding: "10px 20px",
                     background: "#8B4513",
@@ -214,7 +244,7 @@ function App() {
                     marginTop: "20px",
                   }}
                 >
-                  Kembali ke Dashboard
+                  Kembali ke Beranda
                 </button>
               </div>
             }
