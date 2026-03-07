@@ -49,7 +49,7 @@ export const login = async (req, res) => {
         is_active: user.is_active, // tambahkan ini juga
       },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "3h" }
+      { expiresIn: "5h" }
     );
 
     // buat refresh token (7 hari)

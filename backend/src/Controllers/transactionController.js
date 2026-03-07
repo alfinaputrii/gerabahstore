@@ -1,13 +1,21 @@
 import pool from "../db/pool.js";
 
-// 🧾 GET /transactions - Ambil semua transaksi + items
+// 🧾 GET /transactions - Ambil semua transaksi + items (DENGAN FILTER & PAGINATION)
 export const getAllTransactions = async (req, res) => {
   try {
-    const result = await pool.query(`
+    const { page = 1, limit = 10, startDate, endDate, search } = req.query;
+
+    const offset = (page - 1) * limit;
+    let params = [];
+    let paramIndex = 1;
+
+    // Base query - TAMBAHKAN created_at dan transaction_date
+    let query = `
       SELECT 
         t.*, 
         c.username AS customer_name, 
         ca.username AS cashier_name,
+        TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date,
         COALESCE(
           json_agg(
             json_build_object(
@@ -25,14 +33,86 @@ export const getAllTransactions = async (req, res) => {
       LEFT JOIN users ca ON t.cashier_id = ca.id
       LEFT JOIN transaction_items ti ON t.id = ti.transaction_id
       LEFT JOIN products p ON ti.product_id = p.id
-      GROUP BY t.id, c.username, ca.username
-      ORDER BY t.id DESC
-    `);
+      WHERE 1=1
+    `;
 
-    res.json(result.rows);
+    // Filter by date range - GUNAKAN created_at
+    if (startDate) {
+      query += ` AND t.created_at >= $${paramIndex}::date`;
+      params.push(startDate);
+      paramIndex++;
+    }
+
+    if (endDate) {
+      query += ` AND t.created_at <= $${paramIndex}::date + interval '1 day' - interval '1 second'`;
+      params.push(endDate);
+      paramIndex++;
+    }
+
+    // Search by customer name or transaction id
+    if (search) {
+      query += ` AND (c.username ILIKE $${paramIndex} OR t.id::text ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    // Hitung total data (tanpa items) - GUNAKAN created_at
+    let countQuery = `
+      SELECT COUNT(DISTINCT t.id) as total
+      FROM transactions t
+      LEFT JOIN users c ON t.customer_id = c.id
+      WHERE 1=1
+    `;
+
+    let countParams = [];
+
+    if (startDate) {
+      countQuery += ` AND t.created_at >= $${countParams.length + 1}::date`;
+      countParams.push(startDate);
+    }
+
+    if (endDate) {
+      countQuery += ` AND t.created_at <= $${countParams.length + 1}::date + interval '1 day' - interval '1 second'`;
+      countParams.push(endDate);
+    }
+
+    if (search) {
+      countQuery += ` AND (c.username ILIKE $${countParams.length + 1})`;
+      countParams.push(`%${search}%`);
+    }
+
+    const countResult = await pool.query(countQuery, countParams);
+    const total = parseInt(countResult.rows[0].total);
+
+    // Tambah GROUP BY dan pagination ke query utama
+    query += ` GROUP BY t.id, c.username, ca.username ORDER BY t.created_at DESC`;
+
+    // Tambah LIMIT dan OFFSET
+    query += ` LIMIT $${paramIndex}`;
+    params.push(parseInt(limit));
+    paramIndex++;
+
+    query += ` OFFSET $${paramIndex}`;
+    params.push(parseInt(offset));
+
+    const result = await pool.query(query, params);
+
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Terjadi kesalahan server." });
+    console.error("Error in getAllTransactions:", err);
+    res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server.",
+    });
   }
 };
 
@@ -45,6 +125,7 @@ export const getTransactionById = async (req, res) => {
         t.*, 
         c.username AS customer_name, 
         ca.username AS cashier_name,
+        TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date,
         COALESCE(
           json_agg(
             json_build_object(
@@ -65,17 +146,26 @@ export const getTransactionById = async (req, res) => {
       WHERE t.id = $1
       GROUP BY t.id, c.username, ca.username
       `,
-      [req.params.id]
+      [req.params.id],
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Transaksi tidak ditemukan." });
+      return res.status(404).json({
+        success: false,
+        message: "Transaksi tidak ditemukan.",
+      });
     }
 
-    res.json(result.rows[0]);
+    res.json({
+      success: true,
+      data: result.rows[0],
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Terjadi kesalahan server." });
+    console.error("Error in getTransactionById:", err);
+    res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server.",
+    });
   }
 };
 
@@ -84,52 +174,64 @@ export const getTransactionsByCustomer = async (req, res) => {
   try {
     const result = await pool.query(
       `
-      SELECT t.*, 
-             c.username AS customer_name, 
-             ca.username AS cashier_name
+      SELECT 
+        t.*, 
+        c.username AS customer_name, 
+        ca.username AS cashier_name,
+        TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date
       FROM transactions t
       LEFT JOIN users c ON t.customer_id = c.id
       LEFT JOIN users ca ON t.cashier_id = ca.id
       WHERE t.customer_id = $1
-      ORDER BY t.id
+      ORDER BY t.created_at DESC
     `,
-      [req.params.customer_id]
+      [req.params.customer_id],
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Transaksi tidak ditemukan." });
+      return res.status(404).json({
+        success: false,
+        message: "Transaksi tidak ditemukan.",
+      });
     }
 
-    res.json(result.rows);
+    res.json({
+      success: true,
+      data: result.rows,
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Terjadi kesalahan server." });
+    console.error("Error in getTransactionsByCustomer:", err);
+    res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server.",
+    });
   }
 };
 
 // ➕ Buat transaksi baru (otomatis hitung total & diskon via trigger DB)
 export const createTransaction = async (req, res) => {
-  const client = await pool.connect(); // pakai transaksi DB agar aman
+  const client = await pool.connect();
   try {
     const { customer_id, cashier_id, products } = req.body;
 
     if (!customer_id || !cashier_id || !products || products.length === 0) {
       return res.status(400).json({
+        success: false,
         message:
           "Data tidak lengkap. Pastikan customer_id, cashier_id, dan products diisi.",
       });
     }
 
-    await client.query("BEGIN"); // mulai transaksi database
+    await client.query("BEGIN");
 
-    // 1️⃣ Buat transaksi baru dulu (tanpa total — nanti dihitung otomatis di trigger)
+    // 1️⃣ Buat transaksi baru (created_at otomatis diisi oleh database)
     const result = await client.query(
       `
       INSERT INTO transactions (customer_id, cashier_id, total_amount, discount_applied, paid)
       VALUES ($1, $2, 0, 0, 0)
-      RETURNING id;
+      RETURNING id, created_at;
       `,
-      [customer_id, cashier_id]
+      [customer_id, cashier_id],
     );
 
     const transactionId = result.rows[0].id;
@@ -146,36 +248,41 @@ export const createTransaction = async (req, res) => {
         INSERT INTO transaction_items (transaction_id, product_id, quantity)
         VALUES ($1, $2, $3);
         `,
-        [transactionId, product_id, quantity]
+        [transactionId, product_id, quantity],
       );
-      // ⛔ Jangan hitung harga di sini — biarkan trigger yang urus!
     }
 
-    // 3️⃣ Commit transaksi (trigger di DB otomatis jalan di tahap ini)
     await client.query("COMMIT");
 
-    // 4️⃣ Ambil data transaksi lengkap setelah trigger menghitung total
+    // 4️⃣ Ambil data transaksi lengkap
     const finalResult = await pool.query(
       `
-      SELECT t.*, c.username AS customer_name, ca.username AS cashier_name
+      SELECT 
+        t.*, 
+        c.username AS customer_name, 
+        ca.username AS cashier_name,
+        TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date
       FROM transactions t
       LEFT JOIN users c ON t.customer_id = c.id
       LEFT JOIN users ca ON t.cashier_id = ca.id
       WHERE t.id = $1;
       `,
-      [transactionId]
+      [transactionId],
     );
 
     res.status(201).json({
+      success: true,
       message: "Transaksi berhasil dibuat (total & diskon dihitung otomatis).",
-      transaction: finalResult.rows[0],
+      data: finalResult.rows[0],
     });
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error(err);
-    res
-      .status(500)
-      .json({ message: "Gagal membuat transaksi.", error: err.message });
+    console.error("Error in createTransaction:", err);
+    res.status(500).json({
+      success: false,
+      message: "Gagal membuat transaksi.",
+      error: err.message,
+    });
   } finally {
     client.release();
   }
@@ -186,22 +293,23 @@ export const updateTransaction = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    const { items } = req.body; // Hanya ambil items
+    const { items } = req.body;
     const transactionId = req.params.id;
 
-    // Validasi transaction exists
     const transactionCheck = await client.query(
       "SELECT id FROM transactions WHERE id = $1",
-      [transactionId]
+      [transactionId],
     );
 
     if (transactionCheck.rowCount === 0) {
-      return res.status(404).json({ message: "Transaksi tidak ditemukan." });
+      return res.status(404).json({
+        success: false,
+        message: "Transaksi tidak ditemukan.",
+      });
     }
 
     await client.query("BEGIN");
 
-    // ✅ UPDATE QUANTITY ITEMS berdasarkan product_id
     if (items && Array.isArray(items)) {
       for (const item of items) {
         const { product_id, quantity } = item;
@@ -214,37 +322,33 @@ export const updateTransaction = async (req, res) => {
           throw new Error("Quantity tidak boleh negatif");
         }
 
-        // Cek apakah item sudah ada di transaksi ini
         const existingItem = await client.query(
           `SELECT id FROM transaction_items 
            WHERE transaction_id = $1 AND product_id = $2`,
-          [transactionId, product_id]
+          [transactionId, product_id],
         );
 
         if (existingItem.rowCount > 0) {
           if (quantity === 0) {
-            // Hapus item jika quantity = 0
             await client.query(
               `DELETE FROM transaction_items 
                WHERE transaction_id = $1 AND product_id = $2`,
-              [transactionId, product_id]
+              [transactionId, product_id],
             );
           } else {
-            // UPDATE quantity item yang sudah ada
             await client.query(
               `UPDATE transaction_items 
                SET quantity = $1, updated_at = CURRENT_TIMESTAMP 
                WHERE transaction_id = $2 AND product_id = $3`,
-              [quantity, transactionId, product_id]
+              [quantity, transactionId, product_id],
             );
           }
         } else {
-          // TAMBAH item baru ke transaksi (hanya jika quantity > 0)
           if (quantity > 0) {
             await client.query(
               `INSERT INTO transaction_items (transaction_id, product_id, quantity)
                VALUES ($1, $2, $3)`,
-              [transactionId, product_id, quantity]
+              [transactionId, product_id, quantity],
             );
           }
         }
@@ -253,13 +357,13 @@ export const updateTransaction = async (req, res) => {
 
     await client.query("COMMIT");
 
-    // Ambil data terbaru
     const finalResult = await pool.query(
       `
       SELECT 
         t.*, 
         c.username AS customer_name, 
         ca.username AS cashier_name,
+        TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date,
         COALESCE(
           json_agg(
             json_build_object(
@@ -280,17 +384,19 @@ export const updateTransaction = async (req, res) => {
       WHERE t.id = $1
       GROUP BY t.id, c.username, ca.username
       `,
-      [transactionId]
+      [transactionId],
     );
 
     res.json({
+      success: true,
       message: "Items transaksi berhasil diperbarui.",
-      transaction: finalResult.rows[0],
+      data: finalResult.rows[0],
     });
   } catch (err) {
     await client.query("ROLLBACK");
-    console.error(err);
+    console.error("Error in updateTransaction:", err);
     res.status(500).json({
+      success: false,
       message: "Gagal memperbarui transaksi.",
       error: err.message,
     });
@@ -304,16 +410,25 @@ export const deleteTransaction = async (req, res) => {
   try {
     const result = await pool.query(
       "DELETE FROM transactions WHERE id = $1 RETURNING *",
-      [req.params.id]
+      [req.params.id],
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Transaksi tidak ditemukan." });
+      return res.status(404).json({
+        success: false,
+        message: "Transaksi tidak ditemukan.",
+      });
     }
 
-    res.json({ message: "Transaksi berhasil dihapus." });
+    res.json({
+      success: true,
+      message: "Transaksi berhasil dihapus.",
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Terjadi kesalahan server." });
+    console.error("Error in deleteTransaction:", err);
+    res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan server.",
+    });
   }
 };

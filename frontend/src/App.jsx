@@ -1,19 +1,20 @@
-// src/App.jsx - UPDATE INI
+// src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { Toaster } from "react-hot-toast"; // <-- IMPORT INI
 import Login from "./pages/auth/Login";
 import CustomerDashboard from "./pages/customer/Dashboard";
 import Products from "./pages/customer/Products";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
-
-// IMPORT ADMIN LAYOUT & PAGES (yang akan kita buat)
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/products/Products";
-
-// IMPORT PROTECTED ROUTE (yang baru saja kita buat)
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminOrders from "./pages/admin/orders/Orders";
+import AdminUsers from "./pages/admin/users/Users";
+import AdminSettings from "./pages/admin/settings/Settings";
+import AdminCategories from "./pages/admin/categories/Categories";
 
 import "./pages/customer/Dashboard.css";
 import "./components/layout/Header.css";
@@ -29,7 +30,6 @@ const Layout = ({ children }) => {
   );
 };
 
-// Komponen placeholder untuk halaman yang belum ada
 const ComingSoonPage = ({ title }) => (
   <div
     style={{
@@ -68,7 +68,6 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Cek apakah user sudah login
     const userData = localStorage.getItem("user");
     const token = localStorage.getItem("token");
 
@@ -82,7 +81,6 @@ function App() {
         localStorage.removeItem("token");
       }
     }
-
     setLoading(false);
   }, []);
 
@@ -97,12 +95,39 @@ function App() {
 
   return (
     <BrowserRouter>
+      {/* TAMBAHKAN TOASTER DI SINI */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "#fff",
+            color: "#363636",
+            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+            borderRadius: "8px",
+            border: "1px solid #E6D5B8",
+          },
+          success: {
+            iconTheme: {
+              primary: "#A67B5B",
+              secondary: "#fff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#ef4444",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
+
       <div className="app">
         <Routes>
           {/* PUBLIC ROUTES */}
           <Route path="/login" element={<Login />} />
 
-          {/* ========== CUSTOMER ROUTES (Navbar di ATAS) ========== */}
+          {/* CUSTOMER ROUTES */}
           <Route
             path="/dashboard"
             element={
@@ -169,7 +194,7 @@ function App() {
             }
           />
 
-          {/* ========== ADMIN ROUTES (Sidebar di SAMPING) ========== */}
+          {/* ADMIN ROUTES */}
           <Route
             path="/admin"
             element={
@@ -178,24 +203,15 @@ function App() {
               </ProtectedRoute>
             }
           >
-            {/* Halaman-halaman admin akan dirender di dalam AdminLayout */}
             <Route index element={<AdminDashboard />} />
             <Route path="products" element={<AdminProducts />} />
-            <Route
-              path="orders"
-              element={<ComingSoonPage title="Kelola Pesanan" />}
-            />
-            <Route
-              path="customers"
-              element={<ComingSoonPage title="Kelola Pelanggan" />}
-            />
-            <Route
-              path="settings"
-              element={<ComingSoonPage title="Pengaturan" />}
-            />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="settings" element={<AdminSettings />} />
           </Route>
 
-          {/* DEFAULT ROUTE - Redirect berdasarkan role */}
+          {/* DEFAULT ROUTE */}
           <Route
             path="/"
             element={
@@ -209,7 +225,7 @@ function App() {
             }
           />
 
-          {/* 404 NOT FOUND */}
+          {/* 404 */}
           <Route
             path="*"
             element={

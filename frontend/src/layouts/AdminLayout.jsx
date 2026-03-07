@@ -1,6 +1,6 @@
 // src/layouts/AdminLayout.jsx
 import { useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Package,
@@ -9,24 +9,36 @@ import {
   Settings,
   LogOut,
   Menu,
+  UserCircle,
+  ChevronDown,
+  Grid3x3, // <-- ICON UNTUK DAFTAR PRODUK
+  Tag, // <-- ICON UNTUK KATEGORI
 } from "lucide-react";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [productsOpen, setProductsOpen] = useState(true);
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-    { icon: Package, label: "Produk", path: "/admin/products" },
-    { icon: ShoppingCart, label: "Pesanan", path: "/admin/orders" },
-    { icon: Users, label: "Pelanggan", path: "/admin/customers" },
-    { icon: Settings, label: "Pengaturan", path: "/admin/settings" },
-  ];
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const userName = user.name || "Admin";
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/login");
+  };
+
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
+  const isProductsActive = () => {
+    return (
+      location.pathname.startsWith("/admin/products") ||
+      location.pathname.startsWith("/admin/categories")
+    );
   };
 
   return (
@@ -37,58 +49,290 @@ const AdminLayout = () => {
       >
         {/* Logo */}
         <div className="p-4 border-b border-soft-brown-200">
-          <h1
-            className={`font-bold text-soft-brown-700 ${!sidebarOpen && "text-center"}`}
+          <div
+            className={`flex items-center ${!sidebarOpen ? "justify-center" : "space-x-2"}`}
           >
-            {sidebarOpen ? "Toko Gerabah" : "TG"}
-          </h1>
+            <div className="w-8 h-8 bg-soft-brown-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+              BR
+            </div>
+            {sidebarOpen && (
+              <span className="font-semibold text-soft-brown-700 text-sm tracking-wide">
+                Bhumika Rupa
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Menu Items */}
+        {/* MENU NAVIGASI - TANPA BACKGROUND SAAT HOVER */}
         <nav className="flex-1 py-4">
-          {menuItems.map((item) => (
+          {/* Dashboard */}
+          <button
+            onClick={() => navigate("/admin")}
+            className={`
+              admin-button 
+              w-full 
+              flex 
+              items-center 
+              px-4 
+              py-3 
+              transition-colors 
+              relative
+              bg-white
+              text-gray-600
+              hover:text-gray-900
+              ${isActive("/admin") ? "text-soft-brown-700" : ""}
+            `}
+          >
+            {isActive("/admin") && (
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-soft-brown-600 rounded-r"></div>
+            )}
+            <LayoutDashboard
+              size={20}
+              className={
+                isActive("/admin") ? "text-soft-brown-700" : "text-gray-500"
+              }
+            />
+            {sidebarOpen && <span className="ml-4">Dashboard</span>}
+          </button>
+
+          {/* Produk dengan Dropdown */}
+          <div className="relative">
             <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className="w-full flex items-center px-4 py-3 text-gray-600 hover:bg-soft-brown-100 hover:text-soft-brown-700 transition-colors"
+              onClick={() => setProductsOpen(!productsOpen)}
+              className={`
+                admin-button 
+                w-full 
+                flex 
+                items-center 
+                justify-between
+                px-4 
+                py-3 
+                transition-colors 
+                bg-white
+                text-gray-600
+                hover:text-gray-900
+                ${isProductsActive() ? "text-soft-brown-700" : ""}
+              `}
             >
-              <item.icon size={20} className="text-soft-brown-600" />
-              {sidebarOpen && <span className="ml-4">{item.label}</span>}
+              <div className="flex items-center">
+                <Package
+                  size={20}
+                  className={
+                    isProductsActive() ? "text-soft-brown-700" : "text-gray-500"
+                  }
+                />
+                {sidebarOpen && <span className="ml-4">Produk</span>}
+              </div>
+              {sidebarOpen && (
+                <ChevronDown
+                  size={16}
+                  className={`transform transition-transform ${productsOpen ? "rotate-180" : ""} ${
+                    isProductsActive() ? "text-soft-brown-700" : "text-gray-500"
+                  }`}
+                />
+              )}
             </button>
-          ))}
+
+            {/* Submenu - muncul jika sidebarOpen dan productsOpen true */}
+            {sidebarOpen && productsOpen && (
+              <div className="bg-white">
+                {/* Daftar Produk */}
+                <button
+                  onClick={() => navigate("/admin/products")}
+                  className={`
+                    admin-button 
+                    w-full 
+                    flex 
+                    items-center 
+                    pl-12
+                    pr-4 
+                    py-2 
+                    transition-colors 
+                    bg-white
+                    text-gray-600
+                    hover:text-gray-900
+                    text-sm
+                    ${isActive("/admin/products") ? "text-soft-brown-700" : ""}
+                  `}
+                >
+                  {isActive("/admin/products") && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-soft-brown-600 rounded-r"></div>
+                  )}
+                  <Grid3x3
+                    size={16}
+                    className={`mr-2 ${isActive("/admin/products") ? "text-soft-brown-700" : "text-gray-500"}`}
+                  />
+                  Daftar Produk
+                </button>
+
+                {/* Kategori */}
+                <button
+                  onClick={() => navigate("/admin/categories")}
+                  className={`
+                    admin-button 
+                    w-full 
+                    flex 
+                    items-center 
+                    pl-12
+                    pr-4 
+                    py-2 
+                    transition-colors 
+                    bg-white
+                    text-gray-600
+                    hover:text-gray-900
+                    text-sm
+                    ${isActive("/admin/categories") ? "text-soft-brown-700" : ""}
+                  `}
+                >
+                  {isActive("/admin/categories") && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-soft-brown-600 rounded-r"></div>
+                  )}
+                  <Tag
+                    size={16}
+                    className={`mr-2 ${isActive("/admin/categories") ? "text-soft-brown-700" : "text-gray-500"}`}
+                  />
+                  Kategori
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Pesanan */}
+          <button
+            onClick={() => navigate("/admin/orders")}
+            className={`
+              admin-button 
+              w-full 
+              flex 
+              items-center 
+              px-4 
+              py-3 
+              transition-colors 
+              relative
+              bg-white
+              text-gray-600
+              hover:text-gray-900
+              ${isActive("/admin/orders") ? "text-soft-brown-700" : ""}
+            `}
+          >
+            {isActive("/admin/orders") && (
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-soft-brown-600 rounded-r"></div>
+            )}
+            <ShoppingCart
+              size={20}
+              className={
+                isActive("/admin/orders")
+                  ? "text-soft-brown-700"
+                  : "text-gray-500"
+              }
+            />
+            {sidebarOpen && <span className="ml-4">Pesanan</span>}
+          </button>
+
+          {/* Users */}
+          <button
+            onClick={() => navigate("/admin/users")}
+            className={`
+              admin-button 
+              w-full 
+              flex 
+              items-center 
+              px-4 
+              py-3 
+              transition-colors 
+              relative
+              bg-white
+              text-gray-600
+              hover:text-gray-900
+              ${isActive("/admin/users") ? "text-soft-brown-700" : ""}
+            `}
+          >
+            {isActive("/admin/users") && (
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-soft-brown-600 rounded-r"></div>
+            )}
+            <Users
+              size={20}
+              className={
+                isActive("/admin/users")
+                  ? "text-soft-brown-700"
+                  : "text-gray-500"
+              }
+            />
+            {sidebarOpen && <span className="ml-4">Users</span>}
+          </button>
+
+          {/* Pengaturan */}
+          <button
+            onClick={() => navigate("/admin/settings")}
+            className={`
+              admin-button 
+              w-full 
+              flex 
+              items-center 
+              px-4 
+              py-3 
+              transition-colors 
+              relative
+              bg-white
+              text-gray-600
+              hover:text-gray-900
+              ${isActive("/admin/settings") ? "text-soft-brown-700" : ""}
+            `}
+          >
+            {isActive("/admin/settings") && (
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-soft-brown-600 rounded-r"></div>
+            )}
+            <Settings
+              size={20}
+              className={
+                isActive("/admin/settings")
+                  ? "text-soft-brown-700"
+                  : "text-gray-500"
+              }
+            />
+            {sidebarOpen && <span className="ml-4">Pengaturan</span>}
+          </button>
         </nav>
 
-        {/* Logout Button */}
+        {/* Logout Button - TETAP DENGAN BACKGROUND COKLAT SAAT HOVER */}
         <div className="p-4 border-t border-soft-brown-200">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center px-4 py-3 text-red-500 hover:bg-red-50 transition-colors rounded-lg"
+            className="admin-button w-full flex items-center px-4 py-3 bg-white text-gray-600 hover:bg-soft-brown-700 hover:text-white transition-colors rounded-lg"
           >
-            <LogOut size={20} />
+            <LogOut size={20} className="text-gray-500" />
             {sidebarOpen && <span className="ml-4">Logout</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="bg-white shadow-sm p-4 border-b border-soft-brown-200">
+        <header className="bg-white shadow-sm py-3 px-6 border-b border-soft-brown-200">
           <div className="flex justify-between items-center">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-soft-brown-100 rounded-lg transition-colors"
-            >
-              <Menu size={20} className="text-soft-brown-700" />
-            </button>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-soft-brown-700">Admin</span>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="admin-button p-2 bg-white text-gray-600 hover:bg-soft-brown-700 hover:text-white rounded-lg transition-colors"
+              >
+                <Menu size={20} />
+              </button>
+              <h1 className="text-lg font-medium text-gray-800">
+                Dashboard Admin
+              </h1>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <UserCircle size={24} className="text-soft-brown-600" />
+                <span className="text-sm font-medium text-gray-700">
+                  {userName}
+                </span>
+              </div>
             </div>
           </div>
         </header>
-
-        {/* Page Content */}
-        <div className="p-6">
+        <div className="flex-1 p-6 overflow-auto">
           <Outlet />
         </div>
       </main>

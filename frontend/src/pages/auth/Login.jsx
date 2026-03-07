@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUser, FaLock } from "react-icons/fa";
 import api from "../../api/axios";
-import "./Login.css";
+import bgImage from "../../assets/bg.jpg"; // IMPORT GAMBAR
 
 function Login() {
   const [username, setUsername] = useState("");
@@ -20,7 +20,6 @@ function Login() {
     try {
       console.log("Mengirim login request...");
 
-      // ✅ PERBAIKI ENDPOINT
       const res = await api.post("/auth/login", {
         username,
         password,
@@ -28,7 +27,6 @@ function Login() {
 
       console.log("Response:", res.data);
 
-      // ✅ PERBAIKI KEY TOKEN
       localStorage.setItem("token", res.data.accessToken);
       localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("user", JSON.stringify(res.data.user));
@@ -48,38 +46,89 @@ function Login() {
   };
 
   return (
-    <div className="login-container">
-      <form className="login-form" onSubmit={handleLogin}>
-        <h2>Gerabah Store</h2>
+    <div
+      className="min-h-screen w-full bg-cover bg-center flex items-center justify-center"
+      style={{ backgroundImage: `url(${bgImage})` }} // PAKAI VARIABLE IMPORT
+    >
+      {/* Card Login */}
+      <div
+        className="w-[360px] p-10 rounded-[20px] 
+                      bg-white/15 backdrop-blur-[12px] 
+                      border border-white/25 
+                      shadow-[0_25px_50px_rgba(0,0,0,0.35)]"
+      >
+        {/* Title */}
+        <h2
+          className="text-center mb-8 text-white 
+                       font-semibold tracking-wide text-2xl"
+        >
+          Gerabah Store
+        </h2>
 
-        {error && <p className="error-text">{error}</p>}
+        {/* Error Message */}
+        {error && (
+          <div
+            className="bg-red-500/80 text-white px-4 py-3 
+                          rounded-lg mb-6 text-sm text-center"
+          >
+            {error}
+          </div>
+        )}
 
-        <div className="input-group">
-          <FaUser className="icon" />
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
+        {/* Form */}
+        <form onSubmit={handleLogin} className="space-y-5">
+          {/* Username Input Group */}
+          <div
+            className="flex items-center bg-white/20 
+                          rounded-[30px] px-[18px] py-3"
+          >
+            <FaUser className="text-white text-sm opacity-80 mr-3" />
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              className="w-full bg-transparent border-none 
+                       outline-none text-white text-sm
+                       placeholder:text-white/75"
+            />
+          </div>
 
-        <div className="input-group">
-          <FaLock className="icon" />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
+          {/* Password Input Group */}
+          <div
+            className="flex items-center bg-white/20 
+                          rounded-[30px] px-[18px] py-3"
+          >
+            <FaLock className="text-white text-sm opacity-80 mr-3" />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full bg-transparent border-none 
+                       outline-none text-white text-sm
+                       placeholder:text-white/75"
+            />
+          </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Loading..." : "Login"}
-        </button>
-      </form>
+          {/* Button Login */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-white hover:bg-gray-100 
+                     text-gray-800 font-semibold 
+                     py-3 px-4 rounded-[30px] mt-2.5
+                     transition-all duration-300
+                     hover:-translate-y-0.5 hover:shadow-[0_10px_25px_rgba(0,0,0,0.25)]
+                     disabled:opacity-50 disabled:cursor-not-allowed
+                     disabled:hover:translate-y-0 disabled:hover:shadow-none"
+          >
+            {loading ? "Loading..." : "Login"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

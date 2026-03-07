@@ -1,4 +1,10 @@
 import pool from "../db/pool.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ✅ Ambil semua produk
 export const getAllProducts = async (req, res) => {
@@ -11,7 +17,14 @@ export const getAllProducts = async (req, res) => {
       ORDER BY p.id
     `);
 
-    res.json(result.rows);
+    // Tambahkan base URL untuk gambar
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const products = result.rows.map((product) => ({
+      ...product,
+      image_url: product.image_url ? `${baseUrl}${product.image_url}` : null,
+    }));
+
+    res.json(products);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Terjadi kesalahan server." });
@@ -29,14 +42,20 @@ export const getProductById = async (req, res) => {
       return res.status(404).json({ message: "Produk tidak ditemukan." });
     }
 
-    res.json(result.rows[0]);
+    const product = result.rows[0];
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+
+    res.json({
+      ...product,
+      image_url: product.image_url ? `${baseUrl}${product.image_url}` : null,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Terjadi kesalahan server." });
   }
 };
 
-// ✅ Tambah produk baru
+// ✅ Tambah produk baru (dengan upload gambar)
 export const createProduct = async (req, res) => {
   try {
     const {
@@ -55,16 +74,38 @@ export const createProduct = async (req, res) => {
         .json({ message: "Kategori, nama, harga, dan stok wajib diisi." });
     }
 
+    // Dapatkan path gambar jika ada
+    let imageUrl = null;
+    if (req.file) {
+      // Simpan path relatif
+      imageUrl = `/uploads/products/${req.file.filename}`;
+    }
+
     const result = await pool.query(
-      `INSERT INTO products (category_id, name, type, price, description, stok, last_modified_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
+      `INSERT INTO products (category_id, name, type, price, description, stok, last_modified_by, image_url)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        RETURNING *`,
-      [category_id, name, type, price, description, stok, last_modified_by]
+      [
+        category_id,
+        name,
+        type,
+        price,
+        description,
+        stok,
+        last_modified_by,
+        imageUrl,
+      ],
     );
+
+    const product = result.rows[0];
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
 
     res.status(201).json({
       message: "Produk berhasil ditambahkan.",
-      product: result.rows[0],
+      product: {
+        ...product,
+        image_url: product.image_url ? `${baseUrl}${product.image_url}` : null,
+      },
     });
   } catch (err) {
     console.error(err);
@@ -95,10 +136,25 @@ export const updateProduct = async (req, res) => {
 
     const old = existing.rows[0];
 
+    // Handle image update
+    let imageUrl = old.image_url;
+    if (req.file) {
+      // Hapus gambar lama jika ada
+      if (old.image_url) {
+        const oldImagePath = path.join(__dirname, "../..", old.image_url);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+      // Set gambar baru
+      imageUrl = `/uploads/products/${req.file.filename}`;
+    }
+
     const result = await pool.query(
       `UPDATE products
-       SET category_id=$1, name=$2, type=$3, price=$4, description=$5, stok=$6, is_available=$7, last_modified_by=$8
-       WHERE id=$9 RETURNING *`,
+       SET category_id=$1, name=$2, type=$3, price=$4, description=$5, 
+           stok=$6, is_available=$7, last_modified_by=$8, image_url=$9
+       WHERE id=$10 RETURNING *`,
       [
         category_id ?? old.category_id,
         name ?? old.name,
@@ -108,13 +164,20 @@ export const updateProduct = async (req, res) => {
         stok ?? old.stok,
         is_available ?? old.is_available,
         last_modified_by ?? old.last_modified_by,
+        imageUrl,
         id,
-      ]
+      ],
     );
+
+    const product = result.rows[0];
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
 
     res.json({
       message: "Produk berhasil diperbarui.",
-      product: result.rows[0],
+      product: {
+        ...product,
+        image_url: product.image_url ? `${baseUrl}${product.image_url}` : null,
+      },
     });
   } catch (err) {
     console.error(err);
@@ -127,16 +190,16 @@ export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // ✅ CEK APAKAH PRODUK MASIH DIGUNAKAN DALAM TRANSAKSI
+    // CEK APAKAH PRODUK MASIH DIGUNAKAN DALAM TRANSAKSI
     const transactionCheck = await pool.query(
       `SELECT COUNT(*) as transaction_count 
        FROM transaction_items 
        WHERE product_id = $1`,
-      [id]
+      [id],
     );
 
     const transactionCount = parseInt(
-      transactionCheck.rows[0].transaction_count
+      transactionCheck.rows[0].transaction_count,
     );
 
     if (transactionCount > 0) {
@@ -146,10 +209,28 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
-    // ✅ JIKA TIDAK ADA TRANSAKSI, LANJUT HAPUS PRODUK
+    // Ambil data produk untuk mendapatkan path gambar
+    const product = await pool.query(
+      "SELECT image_url FROM products WHERE id = $1",
+      [id],
+    );
+
+    // Hapus file gambar jika ada
+    if (product.rows[0]?.image_url) {
+      const imagePath = path.join(
+        __dirname,
+        "../..",
+        product.rows[0].image_url,
+      );
+      if (fs.existsSync(imagePath)) {
+        fs.unlinkSync(imagePath);
+      }
+    }
+
+    // HAPUS PRODUK
     const result = await pool.query(
       "DELETE FROM products WHERE id = $1 RETURNING *",
-      [id]
+      [id],
     );
 
     if (result.rowCount === 0) {

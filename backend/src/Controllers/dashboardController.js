@@ -78,18 +78,17 @@ export const getDashboardSummary = async (req, res) => {
     `);
 
     // ====================================
-    // 4. 5 PESANAN TERBARU
+    // 4. 5 PESANAN TERBARU (PAKAI CREATED_AT)
     // ====================================
-
     const latestOrdersResult = await pool.query(`
       SELECT 
         t.id,
         u.name as customer_name,
         t.total_amount,
-        TO_CHAR(t.transaction_date, 'YYYY-MM-DD HH24:MI') as transaction_date
+        TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date
       FROM transactions t
       JOIN users u ON t.customer_id = u.id
-      ORDER BY t.transaction_date DESC
+      ORDER BY t.created_at DESC
       LIMIT 5
     `);
 
@@ -259,10 +258,10 @@ export const getLatestOrders = async (req, res) => {
         t.id,
         u.name as customer_name,
         t.total_amount,
-        TO_CHAR(t.transaction_date, 'YYYY-MM-DD HH24:MI') as transaction_date
+        TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date
       FROM transactions t
       JOIN users u ON t.customer_id = u.id
-      ORDER BY t.transaction_date DESC
+      ORDER BY t.created_at DESC
       LIMIT $1
     `,
       [limit],
