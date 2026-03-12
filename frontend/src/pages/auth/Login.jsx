@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // <-- TAMBAHKAN Link
 import { FaUser, FaLock } from "react-icons/fa";
 import api from "../../api/axios";
 import bgImage from "../../assets/bg.jpg"; // IMPORT GAMBAR
@@ -127,6 +127,19 @@ function Login() {
           >
             {loading ? "Loading..." : "Login"}
           </button>
+
+          {/* ===== LINK REGISTER ===== */}
+          <div className="text-center mt-4">
+            <p className="text-sm text-white/80">
+              Belum punya akun?{" "}
+              <Link
+                to="/register"
+                className="text-white font-semibold hover:underline hover:text-white transition-colors"
+              >
+                Daftar di sini
+              </Link>
+            </p>
+          </div>
         </form>
       </div>
     </div>

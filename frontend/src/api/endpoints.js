@@ -24,7 +24,30 @@ export const categoryAPI = {
 
 // ===== USER ENDPOINTS =====
 export const userAPI = {
+  // Get current user profile
   getProfile: () => api.get("/users/profile"),
+
+  // ===== TAMBAHAN UNTUK CUSTOMER =====
+  // Get all customers (role = customer)
+  getAllCustomers: () => api.get("/users?role=customer"),
+
+  // Search customers by name or email
+  searchCustomers: (search) => api.get(`/users?role=customer&search=${search}`),
+
+  // Get customer by ID
+  getCustomerById: (id) => api.get(`/users/${id}`),
+};
+
+// ===== TRANSACTION ENDPOINTS =====
+export const transactionAPI = {
+  // Buat transaksi baru
+  create: (data) => api.post("/transactions", data),
+
+  // Ambil riwayat transaksi kasir tertentu
+  getByCashier: (cashierId) => api.get(`/transactions/cashier/${cashierId}`),
+
+  // Ambil detail transaksi berdasarkan ID
+  getById: (id) => api.get(`/transactions/${id}`),
 };
 
 // ===== AUTH CHECK =====

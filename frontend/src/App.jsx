@@ -1,20 +1,32 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Toaster } from "react-hot-toast"; // <-- IMPORT INI
+import { Toaster } from "react-hot-toast";
 import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register"; // <-- IMPORT REGISTER
 import CustomerDashboard from "./pages/customer/Dashboard";
 import Products from "./pages/customer/Products";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
+
+// Admin Imports
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/products/Products";
-import ProtectedRoute from "./components/ProtectedRoute";
+import AdminCategories from "./pages/admin/categories/Categories";
 import AdminOrders from "./pages/admin/orders/Orders";
 import AdminUsers from "./pages/admin/users/Users";
 import AdminSettings from "./pages/admin/settings/Settings";
-import AdminCategories from "./pages/admin/categories/Categories";
+import CreateStaff from "./pages/admin/CreateStaff"; // <-- IMPORT CREATE STAFF
+
+// Kasir Imports
+import KasirLayout from "./layouts/KasirLayout";
+import PosPage from "./pages/kasir/Pos";
+import KasirRiwayat from "./pages/kasir/Riwayat";
+import KasirProfile from "./pages/kasir/Profile";
+import KasirSettings from "./pages/kasir/Settings";
+
+import ProtectedRoute from "./components/ProtectedRoute";
 
 import "./pages/customer/Dashboard.css";
 import "./components/layout/Header.css";
@@ -95,7 +107,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      {/* TAMBAHKAN TOASTER DI SINI */}
       <Toaster
         position="top-right"
         toastOptions={{
@@ -124,10 +135,11 @@ function App() {
 
       <div className="app">
         <Routes>
-          {/* PUBLIC ROUTES */}
+          {/* ========== PUBLIC ROUTES ========== */}
           <Route path="/login" element={<Login />} />
-
-          {/* CUSTOMER ROUTES */}
+          <Route path="/register" element={<Register />} />{" "}
+          {/* <-- TAMBAHKAN INI */}
+          {/* ========== CUSTOMER ROUTES ========== */}
           <Route
             path="/dashboard"
             element={
@@ -138,7 +150,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/customer/products"
             element={
@@ -149,7 +160,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/customer/categories"
             element={
@@ -160,7 +170,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/customer/categories/:id"
             element={
@@ -171,7 +180,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/customer/products/:id"
             element={
@@ -182,7 +190,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/customer/promo"
             element={
@@ -193,8 +200,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-
-          {/* ADMIN ROUTES */}
+          {/* ========== ADMIN ROUTES ========== */}
           <Route
             path="/admin"
             element={
@@ -208,15 +214,32 @@ function App() {
             <Route path="categories" element={<AdminCategories />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="users/create" element={<CreateStaff />} />{" "}
+            {/* <-- TAMBAHKAN INI */}
             <Route path="settings" element={<AdminSettings />} />
           </Route>
-
-          {/* DEFAULT ROUTE */}
+          {/* ========== KASIR ROUTES ========== */}
+          <Route
+            path="/kasir"
+            element={
+              <ProtectedRoute allowedRoles={["cashier"]}>
+                <KasirLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<PosPage />} />
+            <Route path="riwayat" element={<KasirRiwayat />} />
+            <Route path="profile" element={<KasirProfile />} />
+            <Route path="settings" element={<KasirSettings />} />
+          </Route>
+          {/* ========== DEFAULT ROUTE ========== */}
           <Route
             path="/"
             element={
               userRole === "admin" ? (
                 <Navigate to="/admin" replace />
+              ) : userRole === "cashier" ? (
+                <Navigate to="/kasir" replace />
               ) : userRole === "customer" ? (
                 <Navigate to="/dashboard" replace />
               ) : (
@@ -224,8 +247,7 @@ function App() {
               )
             }
           />
-
-          {/* 404 */}
+          {/* ========== 404 NOT FOUND ========== */}
           <Route
             path="*"
             element={
@@ -246,6 +268,8 @@ function App() {
                   onClick={() => {
                     if (userRole === "admin") {
                       window.location.href = "/admin";
+                    } else if (userRole === "cashier") {
+                      window.location.href = "/kasir";
                     } else {
                       window.location.href = "/dashboard";
                     }

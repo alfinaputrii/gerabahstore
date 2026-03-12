@@ -257,19 +257,25 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// ✅ POST /users - Tambah user baru (untuk admin/kasir)
+// ✅ POST /users - Tambah user baru (admin/kasir)
 export const createUser = async (req, res) => {
   try {
-    const { name, username, password, email, membership, role } = req.body;
+    const { name, username, password, email, role } = req.body;
 
-    if (!name || !username || !password || !email || !membership || !role) {
+    if (!name || !username || !password || !email || !role) {
       return res.status(400).json({
         success: false,
-        message: "Semua field wajib diisi.",
+        message: "Nama, username, password, email, dan role wajib diisi.",
       });
     }
 
-    // Cek apakah username/email sudah terdaftar
+    if (!['admin', 'cashier'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Role harus admin atau cashier",
+      });
+    }
+
     const checkUser = await pool.query(
       "SELECT * FROM users WHERE username=$1 OR email=$2",
       [username, email],
@@ -283,16 +289,17 @@ export const createUser = async (req, res) => {
 
     const hashed = await bcrypt.hash(password, 10);
 
+    // membership = NULL untuk admin/cashier
     const result = await pool.query(
       `INSERT INTO users (name, username, password, email, membership, role)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, name, username, email, membership, role, is_active, created_at`,
-      [name, username, hashed, email, membership, role],
+      [name, username, hashed, email, null, role],  // <-- membership = NULL
     );
 
     res.status(201).json({
       success: true,
-      message: "User berhasil ditambahkan.",
+      message: `${role === 'admin' ? 'Admin' : 'Kasir'} berhasil ditambahkan.`,
       data: result.rows[0],
     });
   } catch (err) {
@@ -312,11 +319,10 @@ export const register = async (req, res) => {
     if (!name || !username || !password || !email) {
       return res.status(400).json({
         success: false,
-        message: "Semua field (name, username, password, email) wajib diisi.",
+        message: "Semua field wajib diisi.",
       });
     }
 
-    // Cek apakah username atau email sudah dipakai
     const check = await pool.query(
       "SELECT * FROM users WHERE username=$1 OR email=$2",
       [username, email],
@@ -328,10 +334,9 @@ export const register = async (req, res) => {
       });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Buat user baru (role customer, membership bronze sebagai default)
+    // Customer dapat membership 'bronze'
     const result = await pool.query(
       `INSERT INTO users (name, username, password, email, membership, role)
        VALUES ($1, $2, $3, $4, $5, $6)

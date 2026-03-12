@@ -9,6 +9,7 @@ import {
   Filter,
   X,
   Upload,
+  Eye, // <-- IMPORT ICON EYE
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ProductTableSkeleton } from "../../../components/admin/Skeleton";
@@ -22,6 +23,10 @@ const AdminProducts = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+
+  // State untuk detail modal
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     fetchProducts();
@@ -89,6 +94,12 @@ const AdminProducts = () => {
         },
       },
     );
+  };
+
+  // Handler untuk lihat detail
+  const handleViewDetail = (product) => {
+    setSelectedProduct(product);
+    setShowDetailModal(true);
   };
 
   // Filter produk berdasarkan search dan kategori
@@ -283,6 +294,15 @@ const AdminProducts = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex gap-2">
+                          {/* TOMBOL DETAIL */}
+                          <button
+                            onClick={() => handleViewDetail(product)}
+                            className="p-1 text-green-600 hover:bg-green-50 rounded"
+                            title="Lihat Detail"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          {/* TOMBOL EDIT */}
                           <button
                             onClick={() => {
                               setEditingProduct(product);
@@ -293,6 +313,7 @@ const AdminProducts = () => {
                           >
                             <Edit2 size={18} />
                           </button>
+                          {/* TOMBOL HAPUS */}
                           <button
                             onClick={() => handleDelete(product.id)}
                             className="p-1 text-red-600 hover:bg-red-50 rounded"
@@ -311,7 +332,7 @@ const AdminProducts = () => {
         </div>
       )}
 
-      {/* Modal Form */}
+      {/* MODAL FORM (Tambah/Edit) */}
       {showModal && (
         <ProductForm
           product={editingProduct}
@@ -323,11 +344,175 @@ const AdminProducts = () => {
           }}
         />
       )}
+
+      {/* MODAL DETAIL PRODUK */}
+      {showDetailModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-soft-brown-200">
+              <h2 className="text-xl font-bold text-soft-brown-800">
+                Detail Produk
+              </h2>
+              <button
+                onClick={() => {
+                  setShowDetailModal(false);
+                  setSelectedProduct(null);
+                }}
+                className="p-1 hover:bg-gray-100 rounded"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="grid grid-cols-2 gap-6">
+                {/* Foto Produk */}
+                <div className="col-span-2 md:col-span-1">
+                  <div className="aspect-square rounded-xl border-2 border-soft-brown-200 overflow-hidden bg-soft-brown-50">
+                    {selectedProduct.image_url ? (
+                      <img
+                        src={selectedProduct.image_url}
+                        alt={selectedProduct.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package size={64} className="text-soft-brown-300" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Info Produk */}
+                <div className="col-span-2 md:col-span-1 space-y-4">
+                  <div>
+                    <p className="text-xs text-gray-500">Nama Produk</p>
+                    <p className="font-medium text-lg">
+                      {selectedProduct.name}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500">Kategori</p>
+                      <p className="font-medium">
+                        {selectedProduct.category_name || "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Tipe</p>
+                      <p className="font-medium">
+                        {selectedProduct.type || "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-gray-500">Harga</p>
+                      <p className="font-medium text-soft-brown-700">
+                        {formatRupiah(selectedProduct.price)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Stok</p>
+                      <p
+                        className={`font-medium ${
+                          selectedProduct.stok < 5
+                            ? "text-red-600"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        {selectedProduct.stok}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Status</p>
+                    <p>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          selectedProduct.is_available
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {selectedProduct.is_available
+                          ? "Tersedia"
+                          : "Tidak Tersedia"}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-500">Deskripsi</p>
+                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                      {selectedProduct.description || "Tidak ada deskripsi"}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div>
+                      <p className="text-xs text-gray-500">Dibuat pada</p>
+                      <p className="text-sm">
+                        {new Date(
+                          selectedProduct.created_at,
+                        ).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Terakhir diupdate</p>
+                      <p className="text-sm">
+                        {selectedProduct.updated_at
+                          ? new Date(
+                              selectedProduct.updated_at,
+                            ).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-soft-brown-200 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setEditingProduct(selectedProduct);
+                  setShowDetailModal(false);
+                  setShowModal(true);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Edit Produk
+              </button>
+              <button
+                onClick={() => {
+                  setShowDetailModal(false);
+                  setSelectedProduct(null);
+                }}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-// ProductForm Component dengan Upload Gambar
+// ProductForm Component (tetap sama seperti sebelumnya)
 const ProductForm = ({ product, categories, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: product?.name || "",
@@ -346,18 +531,14 @@ const ProductForm = ({ product, categories, onClose, onSuccess }) => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validasi ukuran file (maks 2MB)
       if (file.size > 2 * 1024 * 1024) {
         toast.error("Ukuran file maksimal 2MB");
         return;
       }
-
-      // Validasi tipe file
       if (!file.type.startsWith("image/")) {
         toast.error("File harus berupa gambar");
         return;
       }
-
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
     }
@@ -366,7 +547,6 @@ const ProductForm = ({ product, categories, onClose, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validasi form
     if (
       !formData.name ||
       !formData.price ||
@@ -383,7 +563,6 @@ const ProductForm = ({ product, categories, onClose, onSuccess }) => {
     );
 
     try {
-      // Buat FormData untuk dikirim ke backend
       const submitData = new FormData();
       submitData.append("name", formData.name);
       submitData.append("type", formData.type);
@@ -393,18 +572,15 @@ const ProductForm = ({ product, categories, onClose, onSuccess }) => {
       submitData.append("description", formData.description);
       submitData.append("is_available", formData.is_available);
 
-      // Ambil user ID dari localStorage
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       if (user.id) {
         submitData.append("last_modified_by", user.id);
       }
 
-      // Tambahkan file gambar jika ada
       if (imageFile) {
         submitData.append("image", imageFile);
       }
 
-      // Kirim request
       if (product) {
         await api.put(`/products/${product.id}`, submitData, {
           headers: { "Content-Type": "multipart/form-data" },
@@ -419,7 +595,6 @@ const ProductForm = ({ product, categories, onClose, onSuccess }) => {
         toast.success("Produk berhasil ditambahkan!");
       }
 
-      // Bersihkan preview URL
       if (imagePreview && imagePreview.startsWith("blob:")) {
         URL.revokeObjectURL(imagePreview);
       }
@@ -438,7 +613,6 @@ const ProductForm = ({ product, categories, onClose, onSuccess }) => {
   };
 
   const handleClose = () => {
-    // Bersihkan preview URL
     if (imagePreview && imagePreview.startsWith("blob:")) {
       URL.revokeObjectURL(imagePreview);
     }
@@ -467,7 +641,6 @@ const ProductForm = ({ product, categories, onClose, onSuccess }) => {
               Foto Produk
             </label>
             <div className="flex items-center gap-4 flex-wrap">
-              {/* Preview Image */}
               <div className="w-24 h-24 rounded-lg border-2 border-soft-brown-200 overflow-hidden bg-white flex items-center justify-center">
                 {imagePreview ? (
                   <img
@@ -479,8 +652,6 @@ const ProductForm = ({ product, categories, onClose, onSuccess }) => {
                   <Package size={32} className="text-soft-brown-300" />
                 )}
               </div>
-
-              {/* Upload Button */}
               <div className="flex-1">
                 <div className="relative">
                   <input

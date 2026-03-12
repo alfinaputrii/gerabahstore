@@ -1,20 +1,23 @@
 // src/pages/admin/users/Users.jsx
 import { useState, useEffect } from "react";
-import { 
-  Search, 
-  Eye, 
-  ChevronLeft, 
+import {
+  Search,
+  Eye,
+  ChevronLeft,
   ChevronRight,
   UserCheck,
   UserX,
   Award,
-  History
+  History,
+  UserPlus, // <-- TAMBAHKAN INI
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom"; // <-- TAMBAHKAN INI
 import api from "../../../api/axios";
 import { TableSkeleton } from "../../../components/admin/Skeleton";
 
 const AdminUsers = () => {
+  const navigate = useNavigate(); // <-- TAMBAHKAN INI
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,7 +28,7 @@ const AdminUsers = () => {
   const [filters, setFilters] = useState({
     role: "all",
     membership: "all",
-    status: "all"
+    status: "all",
   });
   const [pagination, setPagination] = useState({
     page: 1,
@@ -109,11 +112,11 @@ const AdminUsers = () => {
       const newStatus = !user.is_active;
       const endpoint = newStatus ? "activate" : "deactivate";
       await api.put(`/users/${user.id}/${endpoint}`);
-      
+
       toast.success(
-        `User ${newStatus ? "diaktifkan" : "dinonaktifkan"} berhasil`
+        `User ${newStatus ? "diaktifkan" : "dinonaktifkan"} berhasil`,
       );
-      
+
       // Refresh data
       fetchUsers();
     } catch (error) {
@@ -124,12 +127,14 @@ const AdminUsers = () => {
 
   const handleUpdateMembership = async (userId, newMembership) => {
     try {
-      await api.put(`/users/${userId}/membership`, { membership: newMembership });
-      
+      await api.put(`/users/${userId}/membership`, {
+        membership: newMembership,
+      });
+
       toast.success("Membership berhasil diupdate");
       setShowMembershipModal(false);
       fetchUsers(); // Refresh data
-      
+
       if (selectedUser?.id === userId) {
         setSelectedUser({ ...selectedUser, membership: newMembership });
       }
@@ -157,54 +162,96 @@ const AdminUsers = () => {
   };
 
   const getMembershipBadge = (membership) => {
-    switch(membership) {
-      case 'gold':
-        return <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium">Gold</span>;
-      case 'silver':
-        return <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">Silver</span>;
-      case 'bronze':
-        return <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-medium">Bronze</span>;
+    switch (membership) {
+      case "gold":
+        return (
+          <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-medium">
+            Gold
+          </span>
+        );
+      case "silver":
+        return (
+          <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs font-medium">
+            Silver
+          </span>
+        );
+      case "bronze":
+        return (
+          <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded-full text-xs font-medium">
+            Bronze
+          </span>
+        );
       default:
-        return <span className="bg-gray-100 text-gray-400 px-2 py-1 rounded-full text-xs">-</span>;
+        return (
+          <span className="bg-gray-100 text-gray-400 px-2 py-1 rounded-full text-xs">
+            -
+          </span>
+        );
     }
   };
 
   const getRoleBadge = (role) => {
-    switch(role) {
-      case 'admin':
-        return <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">Admin</span>;
-      case 'cashier':
-        return <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">Kasir</span>;
-      case 'customer':
-        return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">Customer</span>;
+    switch (role) {
+      case "admin":
+        return (
+          <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">
+            Admin
+          </span>
+        );
+      case "cashier":
+        return (
+          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">
+            Kasir
+          </span>
+        );
+      case "customer":
+        return (
+          <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">
+            Customer
+          </span>
+        );
       default:
-        return <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">{role}</span>;
+        return (
+          <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+            {role}
+          </span>
+        );
     }
   };
 
   if (loading && users.length === 0) {
-  return (
-    <div className="space-y-6">
-      <div className="h-8 bg-soft-brown-100 rounded w-48 animate-pulse"></div>
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-soft-brown-200">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-10 bg-soft-brown-100 rounded animate-pulse"></div>
-          ))}
+    return (
+      <div className="space-y-6">
+        <div className="h-8 bg-soft-brown-100 rounded w-48 animate-pulse"></div>
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-soft-brown-200">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="h-10 bg-soft-brown-100 rounded animate-pulse"
+              ></div>
+            ))}
+          </div>
         </div>
+        <TableSkeleton rows={5} columns={7} />
       </div>
-      <TableSkeleton rows={5} columns={7} />
-    </div>
-  );
+    );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header - DENGAN TOMBOL TAMBAH STAFF */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-soft-brown-800">
           Manajemen Pengguna
         </h1>
+        <button
+          onClick={() => navigate("/admin/users/create")}
+          className="flex items-center gap-2 bg-soft-brown-600 text-white px-4 py-2 rounded-lg hover:bg-soft-brown-700 transition-colors"
+        >
+          <UserPlus size={20} />
+          Tambah Staff
+        </button>
       </div>
 
       {/* Filter & Search */}
@@ -229,7 +276,9 @@ const AdminUsers = () => {
           {/* Filter Role */}
           <select
             value={filters.role}
-            onChange={(e) => setFilters({ ...filters, role: e.target.value, page: 1 })}
+            onChange={(e) =>
+              setFilters({ ...filters, role: e.target.value, page: 1 })
+            }
             className="px-3 py-2 border border-soft-brown-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-brown-300"
           >
             <option value="all">Semua Role</option>
@@ -242,7 +291,9 @@ const AdminUsers = () => {
           {(filters.role === "all" || filters.role === "customer") && (
             <select
               value={filters.membership}
-              onChange={(e) => setFilters({ ...filters, membership: e.target.value, page: 1 })}
+              onChange={(e) =>
+                setFilters({ ...filters, membership: e.target.value, page: 1 })
+              }
               className="px-3 py-2 border border-soft-brown-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-brown-300"
             >
               <option value="all">Semua Membership</option>
@@ -255,7 +306,9 @@ const AdminUsers = () => {
           {/* Filter Status */}
           <select
             value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
+            onChange={(e) =>
+              setFilters({ ...filters, status: e.target.value, page: 1 })
+            }
             className="px-3 py-2 border border-soft-brown-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-soft-brown-300"
           >
             <option value="all">Semua Status</option>
@@ -264,7 +317,7 @@ const AdminUsers = () => {
           </select>
         </div>
 
-        {/* Tombol Terapkan Filter (opsional) */}
+        {/* Tombol Terapkan Filter */}
         <div className="flex justify-end mt-4">
           <button
             onClick={() => {
@@ -338,17 +391,20 @@ const AdminUsers = () => {
                       {getRoleBadge(user.role)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {user.role === "customer" 
-                        ? getMembershipBadge(user.membership)
-                        : <span className="text-gray-400 text-xs">-</span>
-                      }
+                      {user.role === "customer" ? (
+                        getMembershipBadge(user.membership)
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        user.is_active 
-                          ? "bg-green-100 text-green-700" 
-                          : "bg-red-100 text-red-700"
-                      }`}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          user.is_active
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
                         {user.is_active ? "Aktif" : "Nonaktif"}
                       </span>
                     </td>
@@ -373,7 +429,11 @@ const AdminUsers = () => {
                           }`}
                           title={user.is_active ? "Nonaktifkan" : "Aktifkan"}
                         >
-                          {user.is_active ? <UserX size={18} /> : <UserCheck size={18} />}
+                          {user.is_active ? (
+                            <UserX size={18} />
+                          ) : (
+                            <UserCheck size={18} />
+                          )}
                         </button>
                         {user.role === "customer" && (
                           <button
@@ -458,32 +518,37 @@ const AdminUsers = () => {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Role</p>
-                  <p className="font-medium">{getRoleBadge(selectedUser.role)}</p>
+                  <p className="font-medium">
+                    {getRoleBadge(selectedUser.role)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Membership</p>
                   <p className="font-medium">
-                    {selectedUser.role === "customer" 
+                    {selectedUser.role === "customer"
                       ? getMembershipBadge(selectedUser.membership)
-                      : "-"
-                    }
+                      : "-"}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Status</p>
                   <p className="font-medium">
-                    <span className={`px-2 py-1 rounded-full text-xs ${
-                      selectedUser.is_active 
-                        ? "bg-green-100 text-green-700" 
-                        : "bg-red-100 text-red-700"
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ${
+                        selectedUser.is_active
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
                       {selectedUser.is_active ? "Aktif" : "Nonaktif"}
                     </span>
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Bergabung</p>
-                  <p className="font-medium">{formatDate(selectedUser.created_at)}</p>
+                  <p className="font-medium">
+                    {formatDate(selectedUser.created_at)}
+                  </p>
                 </div>
               </div>
 
@@ -498,16 +563,25 @@ const AdminUsers = () => {
                   ) : (
                     <div className="space-y-2">
                       {userTransactions.map((trx) => (
-                        <div key={trx.id} className="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
+                        <div
+                          key={trx.id}
+                          className="bg-gray-50 p-3 rounded-lg flex justify-between items-center"
+                        >
                           <div>
                             <p className="font-medium">#{trx.id}</p>
                             <p className="text-xs text-gray-500">
-                              {new Date(trx.transaction_date).toLocaleDateString('id-ID')}
+                              {new Date(
+                                trx.transaction_date,
+                              ).toLocaleDateString("id-ID")}
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium">{formatRupiah(trx.total_amount)}</p>
-                            <p className="text-xs text-gray-500">{trx.total_items} item</p>
+                            <p className="font-medium">
+                              {formatRupiah(trx.total_amount)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {trx.total_items} item
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -558,22 +632,26 @@ const AdminUsers = () => {
               <p className="text-sm text-gray-600 mb-4">
                 Pilih level membership untuk customer ini:
               </p>
-              
+
               <div className="space-y-3">
-                {['bronze', 'silver', 'gold'].map((level) => (
+                {["bronze", "silver", "gold"].map((level) => (
                   <button
                     key={level}
-                    onClick={() => handleUpdateMembership(selectedUser.id, level)}
+                    onClick={() =>
+                      handleUpdateMembership(selectedUser.id, level)
+                    }
                     className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                       selectedUser.membership === level
-                        ? 'border-soft-brown-600 bg-soft-brown-50'
-                        : 'border-gray-200 hover:border-soft-brown-300'
+                        ? "border-soft-brown-600 bg-soft-brown-50"
+                        : "border-gray-200 hover:border-soft-brown-300"
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-medium capitalize">{level}</span>
                       {selectedUser.membership === level && (
-                        <span className="text-soft-brown-600 text-sm">Current</span>
+                        <span className="text-soft-brown-600 text-sm">
+                          Current
+                        </span>
                       )}
                     </div>
                   </button>

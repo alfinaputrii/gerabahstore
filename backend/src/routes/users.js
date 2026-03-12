@@ -263,10 +263,6 @@ router.put("/profile", verifyToken, updateOwnProfile);
  */
 router.put("/profile/change-password", verifyToken, changePassword);
 
-// ============================================================================
-// ADMIN ONLY (VERIFY TOKEN + ROLE ADMIN)
-// ============================================================================
-
 /**
  * @swagger
  * /users:
@@ -365,7 +361,7 @@ router.put("/profile/change-password", verifyToken, changePassword);
  *       403:
  *         description: Akses ditolak (bukan admin)
  */
-router.get("/", verifyToken, requireRoles("admin"), getAllUsers);
+router.get("/", verifyToken, requireRoles("admin", "cashier"), getAllUsers);
 
 /**
  * @swagger
@@ -420,7 +416,7 @@ router.get("/", verifyToken, requireRoles("admin"), getAllUsers);
  *       403:
  *         description: Akses ditolak (bukan admin)
  */
-router.get("/:id", verifyToken, requireRoles("admin"), getUserById);
+router.get("/:id", verifyToken, requireRoles("admin", "cashier"), getUserById);
 
 /**
  * @swagger
