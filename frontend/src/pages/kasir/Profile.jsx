@@ -59,7 +59,7 @@ const KasirProfile = () => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-soft-brown-800">Profile Kasir</h1>
+      <h1 className="text-2xl font-bold text-white">Profile Kasir</h1>
 
       <div className="bg-white rounded-xl shadow-sm border border-soft-brown-200 p-6">
         <form onSubmit={handleSubmit} className="space-y-4">

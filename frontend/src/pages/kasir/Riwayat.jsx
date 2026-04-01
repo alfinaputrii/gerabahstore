@@ -96,7 +96,7 @@ const KasirRiwayat = () => {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-soft-brown-800">Riwayat Transaksi</h1>
+      <h1 className="text-2xl font-bold text-white">Riwayat Transaksi</h1>
 
       {/* Filter */}
       <div className="bg-white p-4 rounded-xl shadow-sm border border-soft-brown-200">
