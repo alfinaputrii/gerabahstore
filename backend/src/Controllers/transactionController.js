@@ -20,14 +20,13 @@ export const getAllTransactions = async (req, res) => {
         COALESCE(
           json_agg(
             json_build_object(
-              'id', ti.id,
               'product_id', ti.product_id,
               'product_name', p.name,
               'price', p.price,
               'quantity', ti.quantity,
               'subtotal', (p.price * ti.quantity)
             )
-          ) FILTER (WHERE ti.id IS NOT NULL), '[]'
+          ) FILTER (WHERE ti.product_id IS NOT NULL), '[]'
         ) AS items
       FROM transactions t
       LEFT JOIN users c ON t.customer_id = c.id
@@ -131,14 +130,13 @@ export const getTransactionById = async (req, res) => {
         COALESCE(
           json_agg(
             json_build_object(
-              'id', ti.id,
               'product_id', ti.product_id,
               'product_name', p.name,
               'price', p.price,
               'quantity', ti.quantity,
               'subtotal', (p.price * ti.quantity)
             )
-          ) FILTER (WHERE ti.id IS NOT NULL), '[]'
+          ) FILTER (WHERE ti.product_id IS NOT NULL), '[]'
         ) AS items
       FROM transactions t
       LEFT JOIN users c ON t.customer_id = c.id
@@ -242,7 +240,7 @@ export const createTransaction = async (req, res) => {
       VALUES ($1, $2, $3, 0, 0, 0)
       RETURNING id, created_at, guest_name;
       `,
-      [customer_id, cashier_id, guest_name || null], // guest_name boleh null
+      [customer_id, cashier_id, guest_name || null],
     );
 
     const transactionId = result.rows[0].id;
@@ -335,7 +333,7 @@ export const updateTransaction = async (req, res) => {
         }
 
         const existingItem = await client.query(
-          `SELECT id FROM transaction_items 
+          `SELECT transaction_id FROM transaction_items 
            WHERE transaction_id = $1 AND product_id = $2`,
           [transactionId, product_id],
         );
@@ -380,14 +378,13 @@ export const updateTransaction = async (req, res) => {
         COALESCE(
           json_agg(
             json_build_object(
-              'id', ti.id,
               'product_id', ti.product_id,
               'product_name', p.name,
               'price', p.price,
               'quantity', ti.quantity,
               'subtotal', (p.price * ti.quantity)
             )
-          ) FILTER (WHERE ti.id IS NOT NULL), '[]'
+          ) FILTER (WHERE ti.product_id IS NOT NULL), '[]'
         ) AS items
       FROM transactions t
       LEFT JOIN users c ON t.customer_id = c.id
@@ -451,7 +448,7 @@ export const getTransactionsByCashier = async (req, res) => {
   try {
     const { cashierId } = req.params;
     const { page = 1, limit = 10, startDate, endDate } = req.query;
-    
+
     const offset = (page - 1) * limit;
     let params = [cashierId];
     let paramIndex = 2;
@@ -466,14 +463,13 @@ export const getTransactionsByCashier = async (req, res) => {
         COALESCE(
           json_agg(
             json_build_object(
-              'id', ti.id,
               'product_id', ti.product_id,
               'product_name', p.name,
               'price', p.price,
               'quantity', ti.quantity,
               'subtotal', (p.price * ti.quantity)
             )
-          ) FILTER (WHERE ti.id IS NOT NULL), '[]'
+          ) FILTER (WHERE ti.product_id IS NOT NULL), '[]'
         ) AS items
       FROM transactions t
       LEFT JOIN users c ON t.customer_id = c.id
@@ -507,7 +503,7 @@ export const getTransactionsByCashier = async (req, res) => {
     // Hitung total (tanpa items)
     const countResult = await pool.query(
       `SELECT COUNT(*) as total FROM transactions WHERE cashier_id = $1`,
-      [cashierId]
+      [cashierId],
     );
     const total = parseInt(countResult.rows[0].total);
 
@@ -521,7 +517,6 @@ export const getTransactionsByCashier = async (req, res) => {
         totalPages: Math.ceil(total / limit),
       },
     });
-
   } catch (err) {
     console.error("Error in getTransactionsByCashier:", err);
     res.status(500).json({
