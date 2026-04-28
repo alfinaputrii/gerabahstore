@@ -1,25 +1,9 @@
 // src/components/customer/ProductCard.jsx
-import React from "react";
-import { FaStar, FaShoppingCart, FaHeart, FaEye } from "react-icons/fa";
-import "./ProductCard.css";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
-const ProductCard = ({ product, onAddToCart, onView, onAddToWishlist }) => {
-  const {
-    id,
-    name,
-    price,
-    description,
-    stok,
-    category_name,
-    type,
-    is_available = true,
-    image_url,
-    rating = 4.5,
-    discount = 0,
-  } = product;
-
-  // Format harga
-  const formatPrice = (price) => {
+export default function ProductCard({ product }) {
+  const formatRupiah = (price) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
@@ -27,193 +11,43 @@ const ProductCard = ({ product, onAddToCart, onView, onAddToWishlist }) => {
     }).format(price);
   };
 
-  // Hitung harga setelah diskon
-  const calculateDiscount = (price, discount) => {
-    return price - (price * discount) / 100;
-  };
-
-  // Warna berdasarkan kategori
-  const getCategoryColor = (category) => {
-    const colors = {
-      vas: "#8B4513",
-      pot: "#A0522D",
-      mangkuk: "#D2691E",
-      guci: "#CD853F",
-      piring: "#8B7355",
-      default: "#8B4513",
-    };
-    return colors[category?.toLowerCase()] || colors.default;
-  };
-
-  // Status stok
-  const getStockStatus = (stock) => {
-    if (stock === 0) return { text: "Habis", className: "out-of-stock" };
-    if (stock < 5) return { text: "Hampir Habis", className: "low-stock" };
-    return { text: `Stok: ${stock}`, className: "in-stock" };
-  };
-
-  const stockStatus = getStockStatus(stok);
-  const discountedPrice = discount > 0 ? calculateDiscount(price, discount) : price;
-  const categoryColor = getCategoryColor(category_name || type);
-
   return (
-    <div className={`product-card ${!is_available ? "unavailable" : ""}`}>
-      {/* HEADER - Badge & Wishlist */}
-      <div className="product-card-header">
-        {discount > 0 && (
-          <div className="discount-badge" style={{ backgroundColor: categoryColor }}>
-            -{discount}%
-          </div>
-        )}
-        
-        <button 
-          className="wishlist-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToWishlist && onAddToWishlist(id);
-          }}
-          aria-label="Tambahkan ke wishlist"
-        >
-          <FaHeart />
-        </button>
-      </div>
-
-      {/* IMAGE SECTION */}
-      <div 
-        className="product-image-container"
-        onClick={() => onView && onView(id)}
+    <Link to={`/product/${product.id}`}>
+      <motion.div
+        className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col"
+        whileHover={{ y: -4 }}
+        transition={{ duration: 0.3 }}
       >
-        <div 
-          className="product-image-placeholder"
-          style={{ backgroundColor: `${categoryColor}20` }}
-        >
-          {image_url ? (
-            <img 
-              src={image_url} 
-              alt={name}
-              className="product-image"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextElementSibling.style.display = 'flex';
-              }}
+        {/* Product Image */}
+        <div className="aspect-square overflow-hidden bg-beige">
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
-          ) : null}
-          
-          <div className="product-image-fallback">
-            <span className="product-initial">
-              {name?.charAt(0).toUpperCase() || "G"}
-            </span>
-            <div className="product-type-badge" style={{ backgroundColor: categoryColor }}>
-              {type?.charAt(0).toUpperCase() || "G"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* PRODUCT INFO */}
-      <div className="product-info">
-        {/* Category */}
-        <div className="product-category">
-          <span 
-            className="category-tag"
-            style={{ 
-              backgroundColor: `${categoryColor}15`,
-              color: categoryColor,
-              borderColor: `${categoryColor}30`
-            }}
-          >
-            {category_name || "Gerabah"}
-          </span>
-        </div>
-
-        {/* Name */}
-        <h3 
-          className="product-name"
-          onClick={() => onView && onView(id)}
-          title={name}
-        >
-          {name}
-        </h3>
-
-        {/* Description */}
-        <p className="product-description">
-          {description || "Gerabah kerajinan tangan berkualitas tinggi"}
-        </p>
-
-        {/* Rating */}
-        <div className="product-rating">
-          <div className="stars">
-            {[...Array(5)].map((_, i) => (
-              <FaStar 
-                key={i} 
-                className={i < Math.floor(rating) ? "star-filled" : "star-empty"}
-                style={{ color: i < Math.floor(rating) ? "#FFB800" : "#E0E0E0" }}
-              />
-            ))}
-          </div>
-          <span className="rating-text">{rating.toFixed(1)}</span>
-        </div>
-
-        {/* Price */}
-        <div className="product-price-section">
-          {discount > 0 ? (
-            <>
-              <div className="discount-price">
-                <span className="original-price">{formatPrice(price)}</span>
-                <span className="current-price">{formatPrice(discountedPrice)}</span>
-              </div>
-              <div className="discount-save">
-                Hemat {formatPrice(price - discountedPrice)}
-              </div>
-            </>
           ) : (
-            <div className="normal-price">
-              <span className="current-price">{formatPrice(price)}</span>
+            <div className="w-full h-full flex items-center justify-center text-6xl">
+              🏺
             </div>
           )}
         </div>
 
-        {/* Stock Status */}
-        <div className={`stock-status ${stockStatus.className}`}>
-          {stockStatus.text}
+        {/* Product Info */}
+        <div className="p-5 flex-1 flex flex-col">
+          <div className="flex-1">
+            <p className="text-xs uppercase tracking-wider text-warm-brown mb-2">
+              {product.category_name || "Produk"}
+            </p>
+            <h3 className="text-xl mb-2 text-dark-brown group-hover:text-terracotta transition-colors font-serif">
+              {product.name}
+            </h3>
+          </div>
+          <p className="text-lg text-terracotta font-medium">
+            {formatRupiah(product.price)}
+          </p>
         </div>
-
-        {/* ACTION BUTTONS */}
-        <div className="product-actions">
-          <button
-            className="view-detail-btn"
-            onClick={() => onView && onView(id)}
-            disabled={!is_available}
-          >
-            <FaEye /> Detail
-          </button>
-          
-          <button
-            className="add-to-cart-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToCart && onAddToCart(id);
-            }}
-            disabled={!is_available || stok === 0}
-            style={{ 
-              backgroundColor: categoryColor,
-              opacity: (!is_available || stok === 0) ? 0.5 : 1
-            }}
-          >
-            <FaShoppingCart />
-            {stok === 0 ? "Habis" : "Beli"}
-          </button>
-        </div>
-      </div>
-
-      {/* AVAILABILITY OVERLAY */}
-      {!is_available && (
-        <div className="unavailable-overlay">
-          <span>Tidak Tersedia</span>
-        </div>
-      )}
-    </div>
+      </motion.div>
+    </Link>
   );
-};
-
-export default ProductCard;
+}

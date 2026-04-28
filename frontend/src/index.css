@@ -1,16 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Lato:wght@300;400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   BASE STYLE (untuk semua halaman)
+   ============================================ */
 @layer base {
   * {
     @apply m-0 p-0 box-border;
-    font-family: 'Poppins', sans-serif;
   }
 
-  /* Body styling */
+  /* Body styling - default untuk admin */
   body {
     @apply min-h-screen m-0 bg-gray-900 text-white/90;
     font-family: 'Poppins', sans-serif;
@@ -20,45 +23,93 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Link styling - KHUSUS CUSTOMER (paksa dengan !) */
-  a:not(.admin-button) {
-    @apply text-blue-400 hover:text-blue-300 no-underline font-medium !important;
-  }
-
   /* Heading */
   h1 {
     @apply text-5xl leading-tight;
   }
-
-  /* Button styling - KHUSUS CUSTOMER (paksa dengan !) */
-  button:not(.admin-button) {
-    @apply rounded-lg border border-transparent px-5 py-3 
-           text-base font-medium cursor-pointer transition-all
-           bg-gray-800 hover:border-blue-400
-           focus:outline-none focus:ring-2 focus:ring-blue-400 !important;
-  }
 }
 
-/* Light mode preference */
+/* ============================================
+   CUSTOMER PAGE STYLE
+   ============================================ */
+.customer-page {
+  font-family: 'Lato', sans-serif;
+  background-color: #FDF8F2;
+  color: #4A3729;
+}
+
+.customer-page h1,
+.customer-page h2,
+.customer-page h3,
+.customer-page h4,
+.customer-page h5,
+.customer-page h6 {
+  font-family: 'Cormorant Garamond', serif;
+}
+
+/* Reset button style untuk customer */
+.customer-page button:not(.admin-button) {
+  all: unset;
+  cursor: pointer;
+}
+
+/* ============================================
+   CUSTOMER PAGE OVERRIDE (WARNA COKLAT)
+   ============================================ */
+.customer-page {
+  --customer-primary: #A67B5B;
+  --customer-primary-dark: #8B5A2B;
+  --customer-text: #4A3729;
+  --customer-text-light: #8B5A2B;
+}
+
+/* Link warna coklat */
+.customer-page a {
+  color: var(--customer-text-light) !important;
+}
+
+.customer-page a:hover {
+  color: var(--customer-primary) !important;
+}
+
+/* Button di customer */
+.customer-page button:not(.admin-button) {
+  background-color: var(--customer-primary) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 0.5rem !important;
+  padding: 0.75rem 1.5rem !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+}
+
+.customer-page button:not(.admin-button):hover {
+  background-color: var(--customer-primary-dark) !important;
+}
+
+/* Link di navbar customer */
+.customer-page nav a {
+  color: #8B5A2B !important;
+}
+
+.customer-page nav a:hover {
+  color: #A67B5B !important;
+}
+
+/* ============================================
+   LIGHT MODE PREFERENCE (tetap untuk admin)
+   ============================================ */
 @media (prefers-color-scheme: light) {
   @layer base {
     body {
       @apply bg-white text-gray-900;
     }
-    
-    a:not(.admin-button) {
-      @apply text-blue-600 hover:text-blue-500 !important;
-    }
-    
-    button:not(.admin-button) {
-      @apply bg-gray-100 text-gray-900 !important;
-    }
   }
 }
 
-/* ========== ADMIN STYLES ========== */
-/* Biarkan admin button pakai styling Tailwind murni */
+/* ============================================
+   ADMIN BUTTON
+   ============================================ */
 .admin-button {
-  /* Kosongkan - biar Tailwind yang handle */
   cursor: pointer;
 }

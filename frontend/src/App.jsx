@@ -2,12 +2,20 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
+import { Outlet } from "react-router-dom";
 import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register"; // <-- IMPORT REGISTER
-import CustomerDashboard from "./pages/customer/Dashboard";
-import Products from "./pages/customer/Products";
+import Register from "./pages/auth/Register";
+
+// ========== CUSTOMER REDESIGN (BARU) ==========
+import { CartProvider } from "./context/CartContext";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
+import Home from "./pages/customer/Home";
+import ProductListing from "./pages/customer/ProductListing";
+import ProductDetail from "./pages/customer/ProductDetail";
+import Cart from "./pages/customer/Cart";
+import Checkout from "./pages/customer/Checkout";
+import OrderConfirmation from "./pages/customer/OrderConfirmation";
 
 // Admin Imports
 import AdminLayout from "./layouts/AdminLayout";
@@ -17,7 +25,7 @@ import AdminCategories from "./pages/admin/categories/Categories";
 import AdminOrders from "./pages/admin/orders/Orders";
 import AdminUsers from "./pages/admin/users/Users";
 import AdminSettings from "./pages/admin/settings/Settings";
-import CreateStaff from "./pages/admin/CreateStaff"; // <-- IMPORT CREATE STAFF
+import CreateStaff from "./pages/admin/CreateStaff";
 
 // Kasir Imports
 import KasirLayout from "./layouts/KasirLayout";
@@ -27,53 +35,6 @@ import KasirProfile from "./pages/kasir/Profile";
 import KasirSettings from "./pages/kasir/Settings";
 
 import ProtectedRoute from "./components/ProtectedRoute";
-
-import "./pages/customer/Dashboard.css";
-import "./components/layout/Header.css";
-import "./components/layout/Footer.css";
-
-const Layout = ({ children }) => {
-  return (
-    <div className="app-layout">
-      <Header />
-      <main className="main-content">{children}</main>
-      <Footer />
-    </div>
-  );
-};
-
-const ComingSoonPage = ({ title }) => (
-  <div
-    style={{
-      padding: "40px 20px",
-      textAlign: "center",
-      minHeight: "60vh",
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-    }}
-  >
-    <h1 style={{ color: "#8B4513", marginBottom: "20px" }}>{title}</h1>
-    <p style={{ marginBottom: "30px", color: "#666" }}>
-      Halaman ini sedang dalam pengembangan
-    </p>
-    <button
-      onClick={() => (window.location.href = "/dashboard")}
-      style={{
-        padding: "12px 24px",
-        background: "#8B4513",
-        color: "white",
-        border: "none",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontWeight: "600",
-      }}
-    >
-      Kembali ke Dashboard
-    </button>
-  </div>
-);
 
 function App() {
   const [userRole, setUserRole] = useState(null);
@@ -107,190 +68,143 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: "#fff",
-            color: "#363636",
-            boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-            borderRadius: "8px",
-            border: "1px solid #E6D5B8",
-          },
-          success: {
-            iconTheme: {
-              primary: "#A67B5B",
-              secondary: "#fff",
+      <CartProvider>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: "#fff",
+              color: "#363636",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              borderRadius: "8px",
+              border: "1px solid #E6D5B8",
             },
-          },
-          error: {
-            iconTheme: {
-              primary: "#ef4444",
-              secondary: "#fff",
+            success: {
+              iconTheme: {
+                primary: "#A67B5B",
+                secondary: "#fff",
+              },
             },
-          },
-        }}
-      />
+            error: {
+              iconTheme: {
+                primary: "#ef4444",
+                secondary: "#fff",
+              },
+            },
+          }}
+        />
 
-      <div className="app">
-        <Routes>
-          {/* ========== PUBLIC ROUTES ========== */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />{" "}
-          {/* <-- TAMBAHKAN INI */}
-          {/* ========== CUSTOMER ROUTES ========== */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute allowedRoles={["customer"]}>
-                <Layout>
-                  <CustomerDashboard />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customer/products"
-            element={
-              <ProtectedRoute allowedRoles={["customer"]}>
-                <Layout>
-                  <Products />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customer/categories"
-            element={
-              <ProtectedRoute allowedRoles={["customer"]}>
-                <Layout>
-                  <ComingSoonPage title="Kategori" />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customer/categories/:id"
-            element={
-              <ProtectedRoute allowedRoles={["customer"]}>
-                <Layout>
-                  <ComingSoonPage title="Detail Kategori" />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customer/products/:id"
-            element={
-              <ProtectedRoute allowedRoles={["customer"]}>
-                <Layout>
-                  <ComingSoonPage title="Detail Produk" />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/customer/promo"
-            element={
-              <ProtectedRoute allowedRoles={["customer"]}>
-                <Layout>
-                  <ComingSoonPage title="Promo" />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          {/* ========== ADMIN ROUTES ========== */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<AdminDashboard />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="categories" element={<AdminCategories />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="users" element={<AdminUsers />} />
-            <Route path="users/create" element={<CreateStaff />} />{" "}
-            {/* <-- TAMBAHKAN INI */}
-            <Route path="settings" element={<AdminSettings />} />
-          </Route>
-          {/* ========== KASIR ROUTES ========== */}
-          <Route
-            path="/kasir"
-            element={
-              <ProtectedRoute allowedRoles={["cashier"]}>
-                <KasirLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<PosPage />} />
-            <Route path="riwayat" element={<KasirRiwayat />} />
-            <Route path="profile" element={<KasirProfile />} />
-            <Route path="settings" element={<KasirSettings />} />
-          </Route>
-          {/* ========== DEFAULT ROUTE ========== */}
-          <Route
-            path="/"
-            element={
-              userRole === "admin" ? (
-                <Navigate to="/admin" replace />
-              ) : userRole === "cashier" ? (
-                <Navigate to="/kasir" replace />
-              ) : userRole === "customer" ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-          {/* ========== 404 NOT FOUND ========== */}
-          <Route
-            path="*"
-            element={
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "50px",
-                  minHeight: "100vh",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <h1>404 - Halaman Tidak Ditemukan</h1>
-                <p>Halaman yang Anda cari tidak ada.</p>
-                <button
-                  onClick={() => {
-                    if (userRole === "admin") {
-                      window.location.href = "/admin";
-                    } else if (userRole === "cashier") {
-                      window.location.href = "/kasir";
-                    } else {
-                      window.location.href = "/dashboard";
-                    }
-                  }}
+        <div className="app">
+          <Routes>
+            {/* ========== PUBLIC ROUTES ========== */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+
+            {/* ========== CUSTOMER ROUTES (REDESIGN) ========== */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute allowedRoles={["customer"]}>
+                  <div className="customer-page min-h-screen flex flex-col">
+                    <Header />
+                    <main className="flex-1">
+                      <Outlet />
+                    </main>
+                    <Footer />
+                  </div>
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Home />} />
+              <Route path="shop" element={<ProductListing />} />
+              <Route path="product/:id" element={<ProductDetail />} />
+              <Route path="cart" element={<Cart />} />
+              <Route path="checkout" element={<Checkout />} />
+              <Route
+                path="order-confirmation"
+                element={<OrderConfirmation />}
+              />
+            </Route>
+
+            {/* ========== ADMIN ROUTES ========== */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="products" element={<AdminProducts />} />
+              <Route path="categories" element={<AdminCategories />} />
+              <Route path="orders" element={<AdminOrders />} />
+              <Route path="users" element={<AdminUsers />} />
+              <Route path="users/create" element={<CreateStaff />} />
+              <Route path="settings" element={<AdminSettings />} />
+            </Route>
+
+            {/* ========== KASIR ROUTES ========== */}
+            <Route
+              path="/kasir"
+              element={
+                <ProtectedRoute allowedRoles={["cashier"]}>
+                  <KasirLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<PosPage />} />
+              <Route path="riwayat" element={<KasirRiwayat />} />
+              <Route path="profile" element={<KasirProfile />} />
+              <Route path="settings" element={<KasirSettings />} />
+            </Route>
+
+            {/* ========== 404 NOT FOUND ========== */}
+            <Route
+              path="*"
+              element={
+                <div
                   style={{
-                    padding: "10px 20px",
-                    background: "#8B4513",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "5px",
-                    cursor: "pointer",
-                    marginTop: "20px",
+                    textAlign: "center",
+                    padding: "50px",
+                    minHeight: "100vh",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
                   }}
                 >
-                  Kembali ke Beranda
-                </button>
-              </div>
-            }
-          />
-        </Routes>
-      </div>
+                  <h1>404 - Halaman Tidak Ditemukan</h1>
+                  <p>Halaman yang Anda cari tidak ada.</p>
+                  <button
+                    onClick={() => {
+                      if (userRole === "admin") {
+                        window.location.href = "/admin";
+                      } else if (userRole === "cashier") {
+                        window.location.href = "/kasir";
+                      } else {
+                        window.location.href = "/";
+                      }
+                    }}
+                    style={{
+                      padding: "10px 20px",
+                      background: "#8B4513",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "5px",
+                      cursor: "pointer",
+                      marginTop: "20px",
+                    }}
+                  >
+                    Kembali ke Beranda
+                  </button>
+                </div>
+              }
+            />
+          </Routes>
+        </div>
+      </CartProvider>
     </BrowserRouter>
   );
 }

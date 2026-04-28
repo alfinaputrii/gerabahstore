@@ -11,8 +11,8 @@ import {
   Menu,
   UserCircle,
   ChevronDown,
-  Grid3x3, // <-- ICON UNTUK DAFTAR PRODUK
-  Tag, // <-- ICON UNTUK KATEGORI
+  Grid3x3,
+  Tag,
 } from "lucide-react";
 
 const AdminLayout = () => {

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom"; // <-- TAMBAHKAN Link
+import { useNavigate, Link } from "react-router-dom";
 import { FaUser, FaLock } from "react-icons/fa";
 import api from "../../api/axios";
-import bgImage from "../../assets/bg.jpg"; // IMPORT GAMBAR
+import bgImage from "../../assets/bg.jpg";
 
 function Login() {
   const [username, setUsername] = useState("");
@@ -31,7 +31,16 @@ function Login() {
       localStorage.setItem("refreshToken", res.data.refreshToken);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      window.location.href = "/dashboard";
+      // ========== REDIRECT BERDASARKAN ROLE ==========
+      const userRole = res.data.user.role;
+
+      if (userRole === "admin") {
+        navigate("/admin");
+      } else if (userRole === "cashier") {
+        navigate("/kasir");
+      } else {
+        navigate("/"); // customer ke home redesign
+      }
     } catch (err) {
       console.error("Error details:", {
         status: err.response?.status,
@@ -48,7 +57,7 @@ function Login() {
   return (
     <div
       className="min-h-screen w-full bg-cover bg-center flex items-center justify-center"
-      style={{ backgroundImage: `url(${bgImage})` }} // PAKAI VARIABLE IMPORT
+      style={{ backgroundImage: `url(${bgImage})` }}
     >
       {/* Card Login */}
       <div
