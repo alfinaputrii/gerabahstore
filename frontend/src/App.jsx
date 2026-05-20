@@ -16,6 +16,10 @@ import ProductDetail from "./pages/customer/ProductDetail";
 import Cart from "./pages/customer/Cart";
 import Checkout from "./pages/customer/Checkout";
 import OrderConfirmation from "./pages/customer/OrderConfirmation";
+import About from "./pages/customer/About";
+import Contact from "./pages/customer/Contact";
+import Profile from "./pages/customer/Profile";
+import MyOrders from "./pages/customer/MyOrders";
 
 // Admin Imports
 import AdminLayout from "./layouts/AdminLayout";
@@ -125,6 +129,11 @@ function App() {
                 path="order-confirmation"
                 element={<OrderConfirmation />}
               />
+              <Route path="about" element={<About />} />
+              <Route path="contact" element={<Contact />} />
+              // Di dalam CUSTOMER ROUTES (REDESIGN)
+              <Route path="profile" element={<Profile />} />
+              <Route path="my-orders" element={<MyOrders />} />
             </Route>
 
             {/* ========== ADMIN ROUTES ========== */}

@@ -141,43 +141,44 @@ export default function Cart() {
           </div>
 
           {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg p-8 shadow-sm sticky top-24">
-              <h2 className="text-3xl mb-6 text-dark-brown font-serif">
-                Ringkasan Belanja
-              </h2>
+          <div className="bg-white rounded-lg p-8 shadow-sm sticky top-24">
+            <h2 className="text-3xl mb-6 text-dark-brown font-serif">
+              Ringkasan Belanja
+            </h2>
 
-              <div className="space-y-4 mb-6 pb-6 border-b border-beige">
-                <div className="flex justify-between text-warm-brown">
-                  <span>Total Item</span>
-                  <span>{totalItems}</span>
-                </div>
-                <div className="flex justify-between text-warm-brown">
-                  <span>Subtotal</span>
-                  <span>{formatRupiah(totalPrice)}</span>
-                </div>
-                <div className="flex justify-between text-warm-brown">
-                  <span>Pengiriman</span>
-                  <span>Gratis</span>
-                </div>
+            <div className="space-y-4 mb-6 pb-6 border-b border-beige">
+              <div className="flex justify-between text-warm-brown">
+                <span>Total Item</span>
+                <span>{totalItems}</span>
               </div>
-
-              <div className="flex justify-between text-2xl mb-8 text-dark-brown">
-                <span>Total</span>
-                <span className="text-terracotta">
-                  {formatRupiah(totalPrice)}
-                </span>
+              <div className="flex justify-between text-warm-brown">
+                <span>Subtotal</span>
+                <span>{formatRupiah(totalPrice)}</span>
               </div>
+            </div>
 
+            <div className="flex justify-between text-2xl mb-8 text-dark-brown">
+              <span>Total</span>
+              <span className="text-terracotta">
+                {formatRupiah(totalPrice)}
+              </span>
+            </div>
+
+            {/* TOMBOL - LEBAR SAMA & LEBIH LEBAR */}
+            <div className="flex flex-col items-center gap-3">
               <button
                 onClick={() => navigate("/checkout")}
-                className="w-full mb-4 px-6 py-3 bg-terracotta text-white rounded-lg hover:bg-warm-brown transition-all duration-300"
+                className="px-8 py-3 bg-terracotta text-white rounded-lg hover:bg-warm-brown transition-all duration-300"
+                style={{ minWidth: "260px" }}
               >
                 Lanjut ke Pembayaran
               </button>
 
               <Link to="/shop">
-                <button className="w-full px-6 py-3 border-2 border-terracotta text-terracotta rounded-lg hover:bg-terracotta hover:text-white transition-all duration-300">
+                <button
+                  className="px-8 py-3 border-2 border-terracotta text-terracotta rounded-lg hover:bg-terracotta hover:text-white transition-all duration-300"
+                  style={{ minWidth: "260px" }}
+                >
                   Lanjut Belanja
                 </button>
               </Link>

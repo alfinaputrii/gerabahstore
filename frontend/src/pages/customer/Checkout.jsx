@@ -41,7 +41,6 @@ export default function Checkout() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validasi
     if (
       !formData.fullName ||
       !formData.email ||
@@ -62,24 +61,25 @@ export default function Checkout() {
     const loadingToast = toast.loading("Memproses pesanan...");
 
     try {
-      // Siapkan data transaksi
       const transactionData = {
-        customer_id: user.id || 1, // Guest default ID 1
-        cashier_id: 1, // Default cashier
+        customer_id: user.id,
+        cashier_id: 12,
         products: items.map((item) => ({
           product_id: item.id,
           quantity: item.quantity,
         })),
-        guest_name: !user.id ? formData.fullName : null,
+        guest_name: null,
+        shipping_address: formData.address,
+        shipping_city: formData.city,
+        customer_phone: formData.phone,
+        order_notes: formData.notes || null,
       };
 
-      // Kirim ke backend
       const response = await api.post("/transactions", transactionData);
 
       toast.dismiss(loadingToast);
       toast.success("Pesanan berhasil dibuat!");
 
-      // Simpan detail order untuk halaman konfirmasi
       const orderDetails = {
         orderNumber: `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
         customer: formData,
@@ -89,10 +89,7 @@ export default function Checkout() {
         date: new Date().toISOString(),
       };
 
-      // Hapus keranjang
       clearCart();
-
-      // Redirect ke halaman konfirmasi
       navigate("/order-confirmation", { state: { orderDetails } });
     } catch (error) {
       toast.dismiss(loadingToast);

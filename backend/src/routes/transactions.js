@@ -336,7 +336,12 @@ router.get(
  *       500:
  *         description: Server error
  */
-router.post("/", verifyToken, requireRoles("cashier"), createTransaction);
+router.post(
+  "/",
+  verifyToken,
+  requireRoles("cashier", "customer"),
+  createTransaction,
+);
 
 /**
  * @swagger
@@ -391,7 +396,12 @@ router.post("/", verifyToken, requireRoles("cashier"), createTransaction);
  *       404:
  *         description: Transaksi tidak ditemukan
  */
-router.put("/:id", verifyToken, requireRoles("cashier"), updateTransaction);
+router.put(
+  "/:id",
+  verifyToken,
+  requireRoles("cashier", "customer"),
+  updateTransaction,
+);
 
 /**
  * @swagger

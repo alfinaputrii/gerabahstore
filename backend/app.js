@@ -13,6 +13,7 @@ import transactionRoutes from "./src/routes/transactions.js";
 import userRoutes from "./src/routes/users.js";
 import dashboardRoutes from "./src/routes/dashboard.js";
 import settingsRoutes from "./src/routes/settings.js";
+import contactRoutes from "./src/routes/contact.js";
 
 // Setup __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -40,6 +41,7 @@ app.use("/transactions", transactionRoutes);
 app.use("/users", userRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/settings", settingsRoutes);
+app.use("/contact", contactRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {

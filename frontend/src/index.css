@@ -113,3 +113,70 @@
 .admin-button {
   cursor: pointer;
 }
+
+/* ============================================
+   FOOTER OVERRIDE
+   ============================================ */
+footer a,
+footer a:link,
+footer a:visited,
+footer p,
+footer li,
+footer span {
+  color: #F5E6D3 !important;
+}
+
+footer a:hover {
+  color: white !important;
+}
+
+/* ============================================
+   HEADER PROFILE ICON - HAPUS BACKGROUND
+   ============================================ */
+.customer-page nav button:not(.admin-button) {
+  background-color: transparent !important;
+  padding: 0 !important;
+  border-radius: 9999px !important;
+  width: 44px !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #8B5A2B !important;
+}
+
+.customer-page nav button:not(.admin-button):hover {
+  background-color: transparent !important;
+  color: #A67B5B !important;
+}
+
+/* Icon di dalam button */
+.customer-page nav button:not(.admin-button) svg {
+  width: 22px !important;
+  height: 22px !important;
+}
+
+/* ============================================
+   LOGOUT BUTTON DI DROPDOWN (PAKSA)
+   ============================================ */
+.customer-page nav .relative .logout-button {
+  background-color: transparent !important;
+  color: #ef4444 !important;
+  padding: 12px 0px !important;
+  border-radius: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.customer-page nav .relative .logout-button:hover {
+  background-color: #FEF2F2 !important;
+  color: #dc2626 !important;
+}
+/* ============================================
+   BUTTON "LIHAT KOLEKSI" DI HOME - WARNA PUTIH
+   ============================================ */
+.customer-page a.bg-terracotta {
+  color: white !important;
+}

@@ -9,13 +9,17 @@ export const getAllTransactions = async (req, res) => {
     let params = [];
     let paramIndex = 1;
 
-    // Base query - TAMBAHKAN created_at dan transaction_date
+    // Base query - TAMBAHKAN field pengiriman
     let query = `
       SELECT 
         t.*, 
         c.username AS customer_name, 
         ca.username AS cashier_name,
         t.guest_name,
+        t.shipping_address,
+        t.shipping_city,
+        t.customer_phone,
+        t.order_notes,
         TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date,
         COALESCE(
           json_agg(
@@ -36,7 +40,7 @@ export const getAllTransactions = async (req, res) => {
       WHERE 1=1
     `;
 
-    // Filter by date range - GUNAKAN created_at
+    // Filter by date range
     if (startDate) {
       query += ` AND t.created_at >= $${paramIndex}::date`;
       params.push(startDate);
@@ -56,7 +60,7 @@ export const getAllTransactions = async (req, res) => {
       paramIndex++;
     }
 
-    // Hitung total data (tanpa items) - GUNAKAN created_at
+    // Hitung total data
     let countQuery = `
       SELECT COUNT(DISTINCT t.id) as total
       FROM transactions t
@@ -84,10 +88,9 @@ export const getAllTransactions = async (req, res) => {
     const countResult = await pool.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].total);
 
-    // Tambah GROUP BY dan pagination ke query utama
+    // Tambah GROUP BY dan pagination
     query += ` GROUP BY t.id, c.username, ca.username ORDER BY t.created_at DESC`;
 
-    // Tambah LIMIT dan OFFSET
     query += ` LIMIT $${paramIndex}`;
     params.push(parseInt(limit));
     paramIndex++;
@@ -126,6 +129,10 @@ export const getTransactionById = async (req, res) => {
         c.username AS customer_name, 
         ca.username AS cashier_name,
         t.guest_name,
+        t.shipping_address,
+        t.shipping_city,
+        t.customer_phone,
+        t.order_notes,
         TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date,
         COALESCE(
           json_agg(
@@ -179,6 +186,10 @@ export const getTransactionsByCustomer = async (req, res) => {
         c.username AS customer_name, 
         ca.username AS cashier_name,
         t.guest_name,
+        t.shipping_address,
+        t.shipping_city,
+        t.customer_phone,
+        t.order_notes,
         TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date
       FROM transactions t
       LEFT JOIN users c ON t.customer_id = c.id
@@ -209,16 +220,23 @@ export const getTransactionsByCustomer = async (req, res) => {
   }
 };
 
-// ➕ Buat transaksi baru (otomatis hitung total & diskon via trigger DB)
+// ➕ Buat transaksi baru (dengan field pengiriman)
 export const createTransaction = async (req, res) => {
   const client = await pool.connect();
   try {
-    let { customer_id, cashier_id, products, guest_name } = req.body;
+    let {
+      customer_id,
+      cashier_id,
+      products,
+      guest_name,
+      shipping_address,
+      shipping_city,
+      customer_phone,
+      order_notes,
+    } = req.body;
 
-    // ===== GUEST USER ID (sesuaikan dengan ID guest di database) =====
-    const GUEST_USER_ID = 8; // <-- GUEST ID KAMU = 8
+    const GUEST_USER_ID = 8;
 
-    // Jika customer_id tidak dikirim atau null, gunakan guest ID
     if (!customer_id) {
       customer_id = GUEST_USER_ID;
     }
@@ -233,19 +251,31 @@ export const createTransaction = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // 1️⃣ Buat transaksi baru (dengan guest_name)
+    // Insert dengan field pengiriman (boleh NULL untuk transaksi POS)
     const result = await client.query(
       `
-      INSERT INTO transactions (customer_id, cashier_id, guest_name, total_amount, discount_applied, paid)
-      VALUES ($1, $2, $3, 0, 0, 0)
+      INSERT INTO transactions (
+        customer_id, cashier_id, guest_name, 
+        total_amount, discount_applied, paid,
+        shipping_address, shipping_city, customer_phone, order_notes
+      )
+      VALUES ($1, $2, $3, 0, 0, 0, $4, $5, $6, $7)
       RETURNING id, created_at, guest_name;
       `,
-      [customer_id, cashier_id, guest_name || null],
+      [
+        customer_id,
+        cashier_id,
+        guest_name || null,
+        shipping_address || null,
+        shipping_city || null,
+        customer_phone || null,
+        order_notes || null,
+      ],
     );
 
     const transactionId = result.rows[0].id;
 
-    // 2️⃣ Masukkan semua produk ke tabel transaction_items
+    // Masukkan produk
     for (const item of products) {
       const { product_id, quantity } = item;
       if (!product_id || !quantity) {
@@ -263,7 +293,7 @@ export const createTransaction = async (req, res) => {
 
     await client.query("COMMIT");
 
-    // 4️⃣ Ambil data transaksi lengkap
+    // Ambil data transaksi lengkap
     const finalResult = await pool.query(
       `
       SELECT 
@@ -271,6 +301,10 @@ export const createTransaction = async (req, res) => {
         c.username AS customer_name, 
         ca.username AS cashier_name,
         t.guest_name,
+        t.shipping_address,
+        t.shipping_city,
+        t.customer_phone,
+        t.order_notes,
         TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date
       FROM transactions t
       LEFT JOIN users c ON t.customer_id = c.id
@@ -282,7 +316,7 @@ export const createTransaction = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Transaksi berhasil dibuat (total & diskon dihitung otomatis).",
+      message: "Transaksi berhasil dibuat.",
       data: finalResult.rows[0],
     });
   } catch (err) {
@@ -374,6 +408,10 @@ export const updateTransaction = async (req, res) => {
         c.username AS customer_name, 
         ca.username AS cashier_name,
         t.guest_name,
+        t.shipping_address,
+        t.shipping_city,
+        t.customer_phone,
+        t.order_notes,
         TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date,
         COALESCE(
           json_agg(
@@ -459,6 +497,10 @@ export const getTransactionsByCashier = async (req, res) => {
         c.username AS customer_name,
         ca.username AS cashier_name,
         t.guest_name,
+        t.shipping_address,
+        t.shipping_city,
+        t.customer_phone,
+        t.order_notes,
         TO_CHAR(t.created_at, 'YYYY-MM-DD HH24:MI') as transaction_date,
         COALESCE(
           json_agg(
@@ -479,7 +521,6 @@ export const getTransactionsByCashier = async (req, res) => {
       WHERE t.cashier_id = $1
     `;
 
-    // Filter tanggal
     if (startDate) {
       query += ` AND t.created_at >= $${paramIndex}::date`;
       params.push(startDate);
@@ -494,13 +535,11 @@ export const getTransactionsByCashier = async (req, res) => {
 
     query += ` GROUP BY t.id, c.username, ca.username ORDER BY t.created_at DESC`;
 
-    // Pagination
     query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(parseInt(limit), offset);
 
     const result = await pool.query(query, params);
 
-    // Hitung total (tanpa items)
     const countResult = await pool.query(
       `SELECT COUNT(*) as total FROM transactions WHERE cashier_id = $1`,
       [cashierId],
